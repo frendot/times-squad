@@ -1,12 +1,12 @@
 // On-device storage (spec 11): IndexedDB "times-squad". Nothing leaves the device. Each player (animal icon) has its own
 // progress, facts, run, history and play time, keyed by the player id. If IndexedDB is not available the game runs from memory.
 import { CONFIG } from './config.js';
-import { newPlayerData } from './engine.js';
+import { newPlayerData, migrate } from './player.js';
 
 const DB = 'times-squad', VER = 1;
 let db = null, mem = null;
 const STORES = ['settings', 'progress', 'facts', 'attempts', 'run', 'history', 'playtime'];
-export const defaultSettings = (today) => ({ schemaVersion: 1, sound: true, music: false, installTipDismissed: false, installTipLastShownOn: null,
+export const defaultSettings = (today) => ({ schemaVersion: 2, sound: true, music: false, installTipDismissed: false, installTipLastShownOn: null,
   createdOn: today, lastSeenDay: today, lastPlayer: null });
 
 const req = (r) => new Promise((ok, bad) => { r.onsuccess = () => ok(r.result); r.onerror = () => bad(r.error); });
@@ -49,7 +49,7 @@ export async function loadPlayer(pid) {
       req(t.objectStore('run').get(pid)),
       req(t.objectStore('playtime').getAll(IDBKeyRange.bound(pid + ':', pid + ':\uffff'))),
     ]);
-    if (prog) pd.progress = { ...pd.progress, ...prog };
+    pd.progress = migrate(prog ? { ...pd.progress, ...prog } : pd.progress);
     for (const f of facts || []) { const { pid: _p, ...rest } = f; pd.facts[f.factId] = rest; }
     pd.run = run || null;
     pd.playtime = Object.fromEntries((play || []).map((p) => [p.day, p.activeSeconds]));
@@ -60,7 +60,7 @@ export async function loadPlayer(pid) {
   return pd;
 }
 // One transaction after every gate: facts, attempts, run and progress (spec 11 rules).
-export async function saveGate(pd, { factIds = [], attempts = [], history = null } = {}) {
+export async function saveGate(pd, { factIds = [], attempts = [], history = null, keepRun = false } = {}) {
   if (!db) return;
   try {
     const t = tx(['progress', 'facts', 'attempts', 'run', 'history'], 'readwrite');
@@ -68,7 +68,7 @@ export async function saveGate(pd, { factIds = [], attempts = [], history = null
     for (const id of factIds) if (pd.facts[id]) t.objectStore('facts').put({ ...pd.facts[id], pid: pd.pid }, pd.pid + ':' + id);
     for (const a of attempts) t.objectStore('attempts').add({ ...a, pid: pd.pid });
     if (history) t.objectStore('history').add({ ...history, pid: pd.pid });
-    if (pd.run) t.objectStore('run').put(pd.run, pd.pid); else t.objectStore('run').delete(pd.pid);
+    if (!keepRun) { if (pd.run) t.objectStore('run').put(pd.run, pd.pid); else t.objectStore('run').delete(pd.pid); }
     await done(t);
   } catch { /* the game keeps running from memory; the next gate writes again */ }
 }

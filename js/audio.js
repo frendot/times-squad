@@ -10,14 +10,15 @@ const FILES = ['tap', 'pop', 'feet', 'glock', 'chimes', 'cheer', 'woo', 'boing',
   'laugh', 'munch', 'stomp', 'swish', 'fabric', 'uke', 'fanfare', 'ting', 'hmph', 'music'];
 // Event -> [file, playback rate, gain]. Pitch steps use the playback rate of the same real recording.
 const EVENTS = {
-  ui_tap: ['tap', 1, 0.8], start_jingle: ['fanfare', 1, 0.9], gate_whoosh: ['fabric', 1.1, 0.5], correct_pop: ['pop', 1, 0.9],
-  runners_join: ['feet', 1, 0.6], power_ready: ['chimes', 1, 0.7], power_gate: ['woo', 1, 0.9], miss_boing: ['boing', 1, 0.8],
-  step_aside: ['shuffle', 1, 0.7], miss_picture: ['glock', 1.33, 0.5], rescue: ['clap', 1, 0.8], help_light: ['ting', 1, 0.6],
-  learn_new: ['fanfare', 1.12, 0.8], turnaround: ['swish', 0.8, 0.8], level_done: ['fanfare', 1, 0.9], boss_stomp: ['stomp', 1, 1],
-  boss_grumble: ['hmph', 0.85, 0.9], throw_tickle: ['giggle', 0.95, 0.9], throw_pie: ['splat', 1, 1], throw_splat: ['splosh', 1, 1],
-  boss_dodge: ['swish', 1, 0.9], pie_back: ['splat', 1.15, 0.55], boss_munch: ['munch', 1, 0.9], big_splat: ['splosh', 0.8, 1],
-  boss_laugh: ['laugh', 1, 0.9], boss_dance: ['uke', 1, 0.8], tile_up: ['glock', 1, 0.6], row_firework: ['cheer', 1.05, 0.8], cheer: ['cheer', 1, 0.7],
-  power_step: ['glock', 1, 0.5], giggle_step: ['squeak', 1, 0.6], star: ['glock', 1, 0.7],
+  ui_tap: ['tap', 1, 0.8], start_jingle: ['fanfare', 1, 0.9], go: ['fanfare', 1.12, 0.7],
+  lane: ['swish', 1.5, 0.35], jump: ['fabric', 1.25, 0.6], slide: ['shuffle', 1.1, 0.6],
+  sign: ['ting', 1, 0.55], right: ['pop', 1, 0.9], streak_step: ['glock', 1, 0.45], jam: ['boing', 1, 0.8],
+  zap: ['swish', 1.9, 0.7], poof: ['pop', 0.7, 1], coin: ['ting', 1.6, 0.3],
+  power: ['fanfare', 1.26, 0.85], power_end: ['glock', 0.8, 0.5], shield_pop: ['glock', 1.2, 0.8], smash: ['stomp', 1.1, 0.9],
+  boss_in: ['stomp', 0.9, 1], boss_grumble: ['hmph', 0.85, 0.9], throw: ['swish', 0.9, 0.7], boss_hit: ['splat', 1, 1],
+  boss_laugh: ['laugh', 0.85, 0.8], boss_poof: ['splosh', 0.8, 1], cheer: ['cheer', 1, 0.7], tile_up: ['glock', 1.26, 0.6],
+  crash: ['stomp', 1, 1], crash_boing: ['boing', 0.8, 0.8], munch: ['munch', 1, 0.8], giggle: ['giggle', 1, 0.6],
+  squeak: ['squeak', 1.3, 0.5], woo: ['woo', 1, 0.8], clap: ['clap', 1, 0.7], feet: ['feet', 1, 0.5], chimes: ['chimes', 1, 0.6], uke: ['uke', 1, 0.6],
 };
 const STEP = (n) => Math.pow(2, n / 12);
 const SCALE = [0, 2, 4, 5, 7, 9, 11, 12, 14, 16, 17, 19];
@@ -60,7 +61,7 @@ export function play(event, opts = {}) {
   const e = EVENTS[event]; if (!e) return false;
   return playBuf(e[0], e[1] * (opts.rate || 1), e[2] * (opts.gain || 1), opts.when || 0);
 }
-// Rising notes on the same glockenspiel recording (power bar, stars) or squeaky toy (Giggle Meter).
+// Rising notes on the same glockenspiel recording (power meter).
 export const step = (event, n) => play(event, { rate: STEP(SCALE[Math.max(0, Math.min(SCALE.length - 1, n))]) });
 export function setSound(on) { soundOn = on; if (sfx) sfx.gain.value = on ? 1 : 0; }
 export function setMusic(on) { musicOn = on; if (mus) mus.gain.value = on ? 0.35 : 0; if (on) startMusic(); else stopMusic(); }

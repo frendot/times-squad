@@ -1,13 +1,18 @@
-// Non-gameplay screens: start, install tip, player picker, how to play, home, results, Times Map, pause, parent gate and page.
+// Non-run screens: start, install tip, player picker, how to play, home, shop, Times Map, parent gate and page.
 import { CONFIG } from './config.js';
-import { S, t, tp, show, el, $, $$, sleep, tapOnce, dots, setVar, fmtSquad, today, Stop, esc } from './ui.js';
-import * as E from './engine.js';
+import { S, t, tp, show, el, $, $$, tapOnce, dots, today, Stop, esc } from './ui.js';
 import * as A from './audio.js';
 import * as store from './store.js';
 import { ANIMALS, ICON, broccoli } from './art.js';
-import { factId, parseFact, isWorld1, isWorld1Cell, groupOf } from './facts.js';
+import { art } from './artpack.js';
+// Painted portrait if the sprite pack has one, else the drawn animal.
+const face = (p) => { const a = art([p, 'portrait']); return a ? `<img class="por" src="${a.img.src}" alt="">` : ANIMALS[p]; };
+import { factId, parseFact, groupOf } from './facts.js';
 import { addDays, daysBetween } from './learn.js';
-import { playNext, crowdHTML, placeCrowd, confetti } from './play.js';
+import { runScreen } from './game.js';
+import { SKINS, BLASTERS, buy } from './player.js';
+import { mk, blob } from './sprites.js';
+import { iconCanvas } from './render.js';
 
 const tapSound = () => A.play('ui_tap');
 const safe = (p) => p.catch((e) => { if (!(e instanceof Stop)) throw e; });
@@ -17,11 +22,13 @@ const standalone = () => (self.matchMedia && matchMedia('(display-mode: standalo
 
 // ---- S1 Start ----
 export function start() {
-  const scr = show('start', `<div class="title"><h1>${t('app_name')}</h1><div class="hero">${crowdHTML(10, 'wave')}</div>
+  const scr = show('start', `<div class="title"><h1 class="logo">${t('app_name')}</h1><div class="hero">${CONFIG.PLAYERS.map((p) => `<span class="hrun">${ANIMALS[p]}</span>`).join('')}<span class="hboss">${broccoli('grumpy')}</span></div>
     <p class="tap">${ICON.play} ${t('start')}</p></div><button class="icon grownup corner" aria-label="${tp('grown_ups')}">${ICON.grownup}</button>`);
-  placeCrowd(scr);
   $('.grownup', scr).addEventListener('click', (e) => { e.stopPropagation(); A.unlock(); parentGate(() => start()); });
-  scr.addEventListener('click', () => { A.unlock(); A.play('start_jingle'); afterStart(); }, { once: true });
+  const go = () => { removeEventListener('keydown', key); A.unlock(); A.play('start_jingle'); afterStart(); };
+  const key = (e) => { if (S.screen === 'start' && ['Enter', 'Space'].includes(e.code)) { e.preventDefault(); go(); } };
+  addEventListener('keydown', key);
+  scr.addEventListener('click', go, { once: true });
 }
 function afterStart() {
   const st = S.settings, d = today();
@@ -45,9 +52,8 @@ function installTip() {
 export async function picker() {
   const sums = await store.playerSummaries();
   const cards = CONFIG.PLAYERS.map((p) => {
-    const s = sums[p];
-    const stars = s ? [1, 2, 3].map((i) => `<span class="st ${i <= s.bestStars ? 'on' : ''}">${ICON.star}</span>`).join('') : '';
-    return `<button class="pick" data-p="${p}" aria-label="${t(p)}">${ANIMALS[p]}<span class="stars">${stars}</span></button>`;
+    const s = sums[p]; const best = s && s.runner && s.runner.best ? `${s.runner.best} m` : '';
+    return `<button class="pick" data-p="${p}" aria-label="${t(p)}">${face(p)}<span class="pbest">${best}</span></button>`;
   }).join('');
   const scr = show('picker', `<h1>${t('who')}</h1><div class="picks">${cards}</div>`);
   const b = await safe(tapOnce($$('.pick', scr)));
@@ -64,71 +70,78 @@ export async function choosePlayer(pid) {
 }
 // ---- S3 How to play ----
 export async function howTo(back) {
+  const arrows = (k) => `<span class="key">${k}</span>`;
   const cards = [
-    () => `<div class="sign mini">5 x 2</div><div class="gates g2 demo"><div class="gate"><span>10</span></div><div class="gate"><span>12</span></div></div><p>${t('howto_1')}</p>`,
-    () => `<div class="pic"></div><p>${t('howto_2')}</p>`,
-    () => `<div class="hero">${crowdHTML(10, 'stepaside')}</div><p>${t('howto_3')}</p>`,
+    () => `<h2>${t('how_title')}</h2><div class="ctl"><div class="ctlrow">${arrows('&larr;')}${arrows('&rarr;')}<span>${t('how_lane')}</span></div>
+      <div class="ctlrow">${arrows('&uarr;')}<span>${t('how_jump')}</span></div><div class="ctlrow">${arrows('&darr;')}<span>${t('how_slide')}</span></div>
+      <p class="small">${t('how_keys')}</p><div class="swipes"><i class="sw l"></i><i class="sw r"></i><i class="sw u"></i><i class="sw d"></i></div><p class="small">${t('how_swipe')}</p></div>`,
+    () => `<h2>${t('how_math')}</h2><div class="sign mini">6 x 7</div><div class="lanesdemo"><span>36</span><span class="ok">42</span><span>48</span></div><p>${t('how_math_1')}</p><p>${t('how_math_2')}</p>`,
+    () => `<h2>${t('how_power')}</h2><div class="powdemo"></div><p>${t('how_power_1')}</p><p>${t('how_power_2')}</p>`,
   ];
   for (let i = 0; i < cards.length; i++) {
     const scr = show('howto', `<div class="card big">${cards[i]()}<div class="dotsnav">${cards.map((_, j) => `<i class="${j === i ? 'on' : ''}"></i>`).join('')}</div>
       <div class="row"><button class="btn go next">${t('next')} ${ICON.next}</button><button class="btn alt skip">${t('skip')}</button></div></div>`);
-    if (i === 1) $('.pic', scr).appendChild(dots(2, 5, { max: 200, cls: 'runners' }));
-    placeCrowd(scr);
+    if (i === 2) { const box = $('.powdemo', scr); for (const k of CONFIG.POWERS) { const c = iconCanvas(k); box.appendChild(c); } }
     const b = await safe(tapOnce([$('.next', scr), $('.skip', scr)]));
     if (!b) return;
     tapSound();
     if (b.classList.contains('skip')) break;
   }
-  S.pd.progress.howToSeen = true; store.saveGate(S.pd);
+  S.pd.progress.howToSeen = true; store.saveGate(S.pd, { keepRun: true });
   if (back) return back();
   goHome();
 }
-// ---- S4 Home: Ten Town ----
+// ---- Home ----
 export function goHome() {
-  const pd = S.pd, r = pd.run, P = pd.progress;
+  const pd = S.pd, R = pd.progress.runner;
   A.startMusic();
-  const done = new Set(r ? r.levelsDone || [] : []);
-  const cur = r ? r.stage : null;
-  const node = (st, label) => `<div class="node ${done.has(st) ? 'done' : ''} ${cur === st ? 'cur' : ''}">${done.has(st) ? ICON.check : label}</div>`;
-  let segs = ''; for (let i = 0; i < CONFIG.POWER_SEGMENTS; i++) segs += `<i class="${i < P.power.segments ? 'on' : ''}"></i>`;
-  const stars = [1, 2, 3].map((i) => `<span class="st ${i <= P.bestStars ? 'on' : ''}">${ICON.star}</span>`).join('');
   const scr = show('home', `<div class="topbar"><button class="icon me" aria-label="${t(S.pid)}">${ANIMALS[S.pid]}</button><span class="sp"></span>
       <button class="icon howbtn" aria-label="?">${ICON.help}</button><button class="icon mapbtn" aria-label="${t('map')}">${ICON.map}</button></div>
-    <h1 class="town">${t('town')}</h1>
-    <div class="path">${node('L1', 1)}<b></b>${node('L2', 2)}<b></b>${node('L3', 3)}<b></b><div class="node boss ${cur === 'BOSS' ? 'cur' : ''}">${broccoli('happy')}</div></div>
-    <div class="homepower"><span>${t('power')}</span><div class="powerbar lvl${Math.min(6, P.power.level)}${P.power.level > 1 ? ' layered' : ''}">${segs}<b>x${P.power.level}</b></div></div>
-    <div class="best"><span>${t('best')}:</span>${stars}</div>
-    <button class="btn huge play">${ICON.play} ${r ? t('go_on') : t('play')}</button>
-    <div class="world2">${ICON.cloud} ${t('world2')} <span>${t('later')}</span></div>
+    <h1 class="logo small">${t('app_name')}</h1>
+    <div class="homehero"><span class="hrun big">${face(S.pid)}</span></div>
+    <div class="homestats"><div><span>${t('best')}</span><b class="hbest">${R.best} m</b></div><div><span>${t('coins')}</span><b class="hcoins"><i class="coin"></i>${R.coins}</b></div></div>
+    <button class="btn huge play">${ICON.play} ${t('run')}</button>
+    <p class="small keyhint">${t('home_hint')}</p>
+    <button class="btn alt shopb">${t('shop')}</button>
     <button class="icon grownup corner" aria-label="${tp('grown_ups')}">${ICON.grownup}</button>`);
-  $('.play', scr).addEventListener('click', () => { tapSound(); A.stopMusic(); playNext({ resume: !!r }); }, { once: true });
+  const go = () => { removeEventListener('keydown', key); tapSound(); A.stopMusic(); runScreen({ home: goHome }); };
+  const key = (e) => { if (S.screen !== 'home') return removeEventListener('keydown', key); if (['Enter', 'Space', 'ArrowUp'].includes(e.code)) { e.preventDefault(); go(); } };
+  addEventListener('keydown', key);
+  $('.play', scr).addEventListener('click', go, { once: true });
+  $('.shopb', scr).addEventListener('click', () => { tapSound(); shop(); });
   $('.mapbtn', scr).addEventListener('click', () => { tapSound(); timesMap(goHome); });
   $('.howbtn', scr).addEventListener('click', () => { tapSound(); howTo(); });
   $('.me', scr).addEventListener('click', () => { tapSound(); picker(); });
   $('.grownup', scr).addEventListener('click', () => { tapSound(); parentGate(goHome); });
 }
-// ---- S11 Results ----
-export async function showResults(res) {
-  A.startMusic();
-  const stars = [1, 2, 3].map((i) => `<span class="st big ${i <= res.stars ? 'earn' : ''}">${ICON.star}</span>`).join('');
-  const tiles = res.tilesUp.map((x) => { const [a, b] = parseFact(x.factId); return `<span class="mini t-${x.tier}">${a}x${b}</span>`; }).join('');
-  const scr = show('results', `<div class="card big"><div class="stars3">${stars}</div><p class="big">${t('squad_n', { n: fmtSquad(res.squad) })}</p>
-    ${res.rescued ? `<p>${t('rescued_n_run', { n: res.rescued })}</p>` : ''}
-    ${res.tilesUp.length ? `<div class="tilesup"><span>${t('tiles_up', { n: res.tilesUp.length })}</span>${tiles}</div>` : ''}
-    <h2>${t('great_job')}</h2><p>${t('strong_brain')}</p>
-    <div class="row three"><button class="btn eq mapb">${ICON.map} ${t('map')}</button><button class="btn eq homeb">${t('home')}</button><button class="btn eq again">${t('play_again')}</button></div></div>`);
-  const flow = S.flow;
-  (async () => {
-    for (let i = 0; i < res.stars; i++) { await sleep(450, flow); $$('.st', scr)[i].classList.add('pop'); A.step('star', i * 2); }
-    for (let i = 0; i < res.tilesUp.length; i++) { await sleep(250, flow); const m = $$('.mini', scr)[i]; m.classList.add('pop'); A.play('tile_up', { rate: { bronze: 0.84, silver: 1, gold: 1.26 }[res.tilesUp[i].tier] || 1 }); }
-  })().catch(() => {});
-  const b = await safe(tapOnce([$('.mapb', scr), $('.homeb', scr), $('.again', scr)]));
-  if (!b) return;
-  tapSound();
-  if (b.classList.contains('mapb')) return timesMap(() => showResults(res));
-  if (b.classList.contains('homeb')) return goHome();
-  A.stopMusic(); playNext();
+// ---- Shop: skins and blasters, paid with coins from playing. No real money, ever. ----
+function swatch(item, kind) {
+  return mk(72, 72, (g) => {
+    if (kind === 'skin') { blob(g, (q) => q.arc(36, 40, 26, 0, 7), item.color || '#f0883a', 5); if (item.star) blob(g, (q) => q.arc(36, 20, 9, 0, 7), '#ffd23f', 4); }
+    else { blob(g, (q) => q.roundRect(10, 26, 46, 22, 8), '#5b5f97', 5); const c = item.color === 'rainbow' ? (() => { const k = g.createLinearGradient(50, 0, 70, 0); k.addColorStop(0, '#ff5d73'); k.addColorStop(0.5, '#ffd23f'); k.addColorStop(1, '#4fc3ff'); return k; })() : item.color; blob(g, (q) => q.arc(58, 37, 10, 0, 7), c, 5); }
+  });
 }
+export function shop() {
+  const pd = S.pd, R = pd.progress.runner;
+  const row = (item, kind) => {
+    const own = R.owned.includes(item.id), on = R[kind] === item.id;
+    return `<button class="item ${own ? 'own' : ''} ${on ? 'on' : ''}" data-id="${item.id}" data-k="${kind}"><span class="sw"></span><span class="nm">${t(item.id)}</span>
+      <span class="cost">${on ? t('wearing') : own ? t('use') : `<i class="coin"></i>${item.cost}`}</span></button>`;
+  };
+  const scr = show('shop', `<div class="topbar"><button class="icon backb" aria-label="${t('back')}">${ICON.back}</button><h1>${t('shop')}</h1><span class="sp"></span><b class="hcoins"><i class="coin"></i>${R.coins}</b></div>
+    <p class="small">${t('shop_note')}</p><h2>${t('skins')}</h2><div class="items">${SKINS.map((x) => row(x, 'skin')).join('')}</div>
+    <h2>${t('blasters')}</h2><div class="items">${BLASTERS.map((x) => row(x, 'blaster')).join('')}</div><div class="banner"></div>`);
+  for (const b of $$('.item', scr)) { const list = b.dataset.k === 'skin' ? SKINS : BLASTERS; $('.sw', b).appendChild(swatch(list.find((x) => x.id === b.dataset.id), b.dataset.k)); }
+  $('.backb', scr).addEventListener('click', () => { tapSound(); goHome(); });
+  for (const b of $$('.item', scr)) b.addEventListener('click', () => {
+    const list = b.dataset.k === 'skin' ? SKINS : BLASTERS, item = list.find((x) => x.id === b.dataset.id);
+    const r = buy(pd, item);
+    if (r === 'short') { A.play('jam'); const m = $('.banner', scr); m.textContent = t('need_coins', { n: item.cost - R.coins }); m.classList.remove('show'); void m.offsetWidth; m.classList.add('show'); return; }
+    if (r === 'ok') A.play('power'); else tapSound();
+    R[b.dataset.k] = item.id; store.saveGate(pd, { keepRun: true }); shop();
+  });
+}
+// ---- (v0.1 results screen removed: the run ends on the crash card) ----
 // ---- S12 Times Map ----
 export function mapGrid(pd, { readOnly = false } = {}) {
   const shown = pd.progress.fireworksShown || [];
@@ -140,7 +153,7 @@ export function mapGrid(pd, { readOnly = false } = {}) {
       const id = factId(r, c), f = pd.facts[id];
       const tier = f ? f.tier : 'grey';
       const icon = tier === 'gold' ? ICON.star : tier === 'silver' ? '<b></b><b></b>' : tier === 'bronze' ? '<b></b>' : '';
-      h += `<${readOnly ? 'span' : 'button'} class="cell t-${tier} ${isWorld1Cell(r, c) ? 'w1' : 'later'}" data-r="${r}" data-c="${c}" aria-label="${r} x ${c}">${icon}</${readOnly ? 'span' : 'button'}>`;
+      h += `<${readOnly ? 'span' : 'button'} class="cell t-${tier} w1" data-r="${r}" data-c="${c}" aria-label="${r} x ${c}">${icon}</${readOnly ? 'span' : 'button'}>`;
     }
   }
   return h + '</div>';
@@ -158,8 +171,8 @@ export function timesMap(back) {
     ${mapGrid(pd)}<div class="key"><span class="cell t-grey w1"></span>${t('tier_grey')}<span class="cell t-bronze"><b></b></span>${t('tier_bronze')}
     <span class="cell t-silver"><b></b><b></b></span>${t('tier_silver')}<span class="cell t-gold">${ICON.star}</span>${t('tier_gold')}</div><div class="firework"></div><div class="layer"></div>`);
   if (fresh.length) {
-    pd.progress.fireworksShown = [...(pd.progress.fireworksShown || []), ...fresh]; store.saveGate(pd);
-    A.play('row_firework'); confetti($('.firework', scr), 30);
+    pd.progress.fireworksShown = [...(pd.progress.fireworksShown || []), ...fresh]; store.saveGate(pd, { keepRun: true });
+    A.play('cheer');
   }
   $('.backb', scr).addEventListener('click', () => { tapSound(); back(); });
   for (const c of $$('.cell[data-r]', scr)) c.addEventListener('click', () => { tapSound(); tileDetail(scr, +c.dataset.r, +c.dataset.c); });
@@ -183,24 +196,6 @@ function tileDetail(scr, r, c) {
   layer.innerHTML = ''; layer.appendChild(node); layer.classList.add('show');
   $('.go', node).addEventListener('click', () => { tapSound(); layer.classList.remove('show'); layer.innerHTML = ''; });
 }
-// ---- S13 Pause ----
-export function openPause() {
-  if (S.paused || !['run', 'boss'].includes(S.screen)) return;
-  S.paused = true; S.pauseStart = performance.now();
-  const scr = $('.scr'); const ov = el(`<div class="pause"><div class="card"><h2>${t('paused')}</h2>
-    <button class="btn go goon">${ICON.play} ${t('go_on')}</button>
-    <button class="btn alt tog snd">${ICON.speaker} ${t('sound')} <b></b></button>
-    <button class="btn alt tog mus">${ICON.note} ${t('music')} <b></b></button>
-    <button class="btn alt homeb">${t('home')}</button></div></div>`);
-  scr.appendChild(ov);
-  const upd = () => { $('.snd b', ov).textContent = S.settings.sound ? t('on') : t('off'); $('.mus b', ov).textContent = S.settings.music ? t('on') : t('off'); };
-  upd();
-  $('.snd', ov).addEventListener('click', () => { S.settings.sound = !S.settings.sound; A.setSound(S.settings.sound); store.saveSettings(S.settings); tapSound(); upd(); });
-  $('.mus', ov).addEventListener('click', () => { S.settings.music = !S.settings.music; A.setMusic(S.settings.music); store.saveSettings(S.settings); tapSound(); upd(); });
-  $('.goon', ov).addEventListener('click', () => { A.resume(); tapSound(); closePause(ov); });
-  $('.homeb', ov).addEventListener('click', () => { A.resume(); tapSound(); closePause(ov); goHome(); });
-}
-function closePause(ov) { S.pausedMs = (S.pausedMs || 0) + (performance.now() - S.pauseStart); S.paused = false; ov.remove(); }
 // ---- S14 Parent gate ----
 const rand = (n) => { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n; };
 export function parentGate(back) {
@@ -260,15 +255,15 @@ export async function parentPage(pid, back) {
   const play = await store.playtimeFor(pid);
   const d = today(), mon = mondayOf(d);
   const secs = Object.entries(play).filter(([day]) => day >= mon && day <= d).reduce((s, [, v]) => s + v, 0) + (pid === S.pid ? S.unsaved || 0 : 0);
-  const r = pd.run;
-  const where = !r ? tp('where_home') : r.stage === 'BOSS' ? tp('where_boss') : tp('where_level', { n: r.stage[1] });
+  const R = pd.progress.runner, lastRun = (pd.history || []).filter((h) => h.m !== undefined).slice(-1)[0];
+  const where = lastRun ? tp('last_run', { m: lastRun.m, r: lastRun.right, w: lastRun.wrong }) : tp('no_runs');
   const tricky = trickiest(pd, d);
   let idea = tricky.length ? ideaFor(tricky[0].id) : null;
   if (!idea) { const learn = pd.attempts.slice().reverse().find((a) => pd.facts[a.factId] && pd.facts[a.factId].box <= 2); idea = learn ? ideaFor(learn.factId) : [tp('no_idea')]; }
   const tabs = CONFIG.PLAYERS.map((p) => `<button class="tab ${p === pid ? 'on' : ''}" data-p="${p}" aria-label="${t(p)}">${ANIMALS[p]}</button>`).join('');
   const scr = show('parent', `<div class="topbar"><button class="icon backb" aria-label="${tp('back')}">${ICON.back}</button><h1>${tp('parent_page')}</h1></div>
     <div class="ptext"><div class="tabs"><span>${tp('player')}</span>${tabs}</div>
-    <p>${esc(tp('now', { where }))}</p><p>${tp('week', { n: Math.round(secs / 60) })}</p>
+    <p>${esc(where)}</p><p>${esc(tp('runner_stats', { best: R.best, runs: R.runs, coins: R.coins }))}</p><p>${tp('week', { n: Math.round(secs / 60) })}</p>
     <h3>${tp('map')}</h3><div class="minimap">${mapGrid(pd, { readOnly: true })}</div>
     <h3>${tp('tricky')}</h3>${tricky.length ? `<ol>${tricky.map((x) => { const [a, b] = parseFact(x.id); return `<li>${a} x ${b} - ${esc(mixText(x))}</li>`; }).join('')}</ol>` : `<p>${tp('no_tricky')}</p>`}
     ${idea.map((l) => `<p class="idea">${esc(l)}</p>`).join('')}

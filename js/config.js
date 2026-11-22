@@ -1,39 +1,50 @@
-// All tunable numbers in one place (spec section 15). Change these after playtests; no other file needs to change.
+// All tunable numbers for Times Squad v0.2 (the runner). Change these after playtests; no other file needs to change.
 export const CONFIG = {
-  GATES_PER_LEVEL: 8,
-  MAX_NEW_PER_LEVEL: 3,
-  LEVEL_MIX: { learning: 0.7, due: 0.2, easy: 0.1 },
-  BOSS_MIX: { learning: 0.5, due: 0.4, easy: 0.1 },
-  FOCUS_SHARE: 0.7,
-  STRUGGLE_THRESHOLD: 0.7, STRUGGLE_WINDOW: 8, STRUGGLE_EASY_SLOTS: 2,
-  NEW_FACT_MIN_ACCURACY: 0.7,
-  THREE_GATE_MIN_BOX: 3, THREE_GATE_MIN_ACCURACY: 0.85, THREE_GATE_WINDOW: 10,
-  MAX_CHOICES: 3,
-  DISTRACTOR_WEIGHTS: { ADJ: 40, OBF: 30, SWP: 15, ADD: 15 },
-  RULE_KEEP_PROB: 0.75,
-  REQUEUE_OFFSETS: [3, 8],
-  MISS_STEP_ASIDE: 3,
-  SQUAD_START: 10, SQUAD_FLOOR: 10,
-  SQUAD_DISPLAY_CAP: 999, // above this the counter shows "999+" (Chief of Staff call)
-  POWER_SEGMENTS: 10,
-  POWER_GATE_MAX_ADD: 2000,
-  POWER_GATE_AUTO_MS: 2000,
-  MISS_PICTURE_MS: { level: 4000, boss: 3000 },
-  THINK_HELP_DELAY_MS: 10000,
-  GATE_APPROACH_MS: 3000,
-  SPEED_MIN: 0.8, SPEED_MAX: 1.3, SPEED_STREAK: 5, SPEED_STEP: 0.1,
-  GOLD_MEDIAN_MS: 3000, GOLD_DAYS: 3, SILVER_DAYS: 2,
-  BOSS_ROUND_QUESTIONS: 6,
-  BOSS_TIERS: [{ id: 'A', min: 0, hits: 10 }, { id: 'B', min: 400, hits: 8 }, { id: 'C', min: 1500, hits: 6 }],
-  BOX_INTERVAL_DAYS: [0, 0, 1, 3, 7, 14], // index = box
-  CONFUSION_DAYS: 14,
-  INPUT_LOCK_MS: 300,
-  ARRAY_SHOW_MS: 800,
-  MAX_SPRITES: 150,
-  ATTEMPTS_KEEP: 2000, HISTORY_KEEP: 200, PLAYTIME_KEEP_DAYS: 60,
-  IDLE_STOP_MS: 60000,
-  INSTALL_TIP_EVERY_DAYS: 7,
-  RESET_HOLD_MS: 3000,
+  VERSION: '0.2.0',
   PLAYERS: ['fox', 'panda', 'frog', 'owl'],
-  VERSION: '0.1.0',
+  // ---- Runner ----
+  STEP_S: 1 / 60,                 // fixed simulation step
+  SPEED_START: 11, SPEED_GAIN: 0.09, SPEED_MAX: 27, // m/s; brisk start, +0.09 m/s every second
+  LANE_W: 2.2, LANE_SWITCH_S: 0.13,
+  JUMP_V: 9, GRAVITY: 27, SLIDE_S: 0.65,
+  SPAWN_AHEAD_M: 140,
+  OBSTACLE_GAP_M: [30, 14],       // gap between obstacle groups at start speed / at max speed (plus some seeded spread)
+  OBSTACLE_SPREAD_M: 12,
+  SAFE_START_M: 40,
+  // ---- Maths ----
+  QUESTION_EVERY_M: [95, 60],     // from start / at max speed
+  THINK_S: [3.4, 2.3],            // how early the sign shows before the numbers reach you (easy fact / hard + fast)
+  MONSTER_AHEAD_S: 1.15,          // a monster appears this many seconds ahead after a pickup
+  JAM_S: 1.5, HINT_S: 1.5,
+  BLASTER_MAX_CHARGE: 3, ZAP_RANGE_M: 30,
+  WANDER_MONSTER_EVERY_M: 160,
+  // Harder with distance: which tables join the mix (all facts up to 12 x 12 by 1100 m)
+  BANDS: [
+    { from: 0, tables: [2, 5, 10, 3, 4] },
+    { from: 250, tables: [2, 3, 4, 5, 10, 6, 11] },
+    { from: 550, tables: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
+    { from: 1100, tables: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] },
+  ],
+  MIX: { due: 0.4, learning: 0.3, fresh: 0.2, known: 0.1 },
+  NO_REPEAT_LAST: 3,
+  // ---- Boss ----
+  BOSS_EVERY_M: 500, BOSS_HP: [4, 8], BOSS_Q_EVERY_M_FACTOR: 0.6, BOSS_THROW_EVERY_S: 2.6, BOSS_COINS: 50,
+  // ---- Powers ----
+  POWER_STREAK: 5, POWERS: ['shield', 'magnet', 'jetpack', 'giant'],
+  POWER_S: { shield: 12, magnet: 8, jetpack: 5, giant: 6 },
+  POWER_BOX_EVERY_M: 330, MAGNET_RANGE_M: 14, JET_Y: 3.2,
+  // ---- Score and coins ----
+  SCORE: { meter: 1, coin: 5, right: 20, zap: 25, boss: 300, smash: 15 },
+  COIN_LINE_EVERY_M: 55,
+  TIER_COINS: { bronze: 10, silver: 20, gold: 40 },
+  // ---- Learning (same spaced repetition as v0.1) ----
+  GOLD_MEDIAN_MS: 3000, GOLD_DAYS: 3, SILVER_DAYS: 2,
+  BOX_INTERVAL_DAYS: [0, 0, 1, 3, 7, 14],
+  CONFUSION_DAYS: 14,
+  MAX_CHOICES: 3,
+  DISTRACTOR_WEIGHTS: { ADJ: 40, OBF: 35, SWP: 15, ADD: 10 },
+  RULE_KEEP_PROB: 0.75,
+  ATTEMPTS_KEEP: 2000, HISTORY_KEEP: 200, PLAYTIME_KEEP_DAYS: 60,
+  IDLE_STOP_MS: 60000, INSTALL_TIP_EVERY_DAYS: 7, RESET_HOLD_MS: 3000,
+  RETRY_GUARD_MS: 250,
 };
