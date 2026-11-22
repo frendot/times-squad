@@ -1,0 +1,787 @@
+{
+ "note": "Every sound is a real recording (CC0 1.0). No synthesis. listenedBy is null until a person has listened to the file (spec 12.4).",
+ "totalBytes": 341456,
+ "sounds": [
+  {
+   "id": "tap",
+   "file": "tap.m4a",
+   "events": [
+    "ui_tap"
+   ],
+   "what": "a knock on wood",
+   "seconds": 0.3,
+   "bytes": 3086,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/144943/",
+     "title": "Knock_1.wav",
+     "author": "Adam_N",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 0.00-0.30 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "low-pass 3500 Hz",
+    "level to -26 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "pop",
+   "file": "pop.m4a",
+   "events": [
+    "correct_pop"
+   ],
+   "what": "a cork pop",
+   "seconds": 0.39,
+   "bytes": 4377,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/434143/",
+     "title": "Cork pop.wav",
+     "author": "mfearnley",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 0.62-1.02 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "pitch +2 st",
+    "level to -20 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "feet",
+   "file": "feet.m4a",
+   "events": [
+    "runners_join"
+   ],
+   "what": "running feet on a wooden floor",
+   "seconds": 1.08,
+   "bytes": 10118,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/32939/",
+     "title": "running.wav",
+     "author": "sagetyrtle",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 0.96-2.40 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "pitch +3 st",
+    "speed x1.35",
+    "high-pass 150 Hz",
+    "level to -24 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "glock",
+   "file": "glock.m4a",
+   "events": [
+    "power_step",
+    "miss_picture",
+    "star_1",
+    "star_2",
+    "star_3",
+    "tile_up"
+   ],
+   "what": "one glockenspiel note (pitched per step in the app)",
+   "seconds": 1.03,
+   "bytes": 9791,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/396287/",
+     "title": "gluckG.wav",
+     "author": "mamamucodes",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 0.00-1.03 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "level to -22 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "chimes",
+   "file": "chimes.m4a",
+   "events": [
+    "power_ready"
+   ],
+   "what": "wind chimes",
+   "seconds": 2.2,
+   "bytes": 19191,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/398495/",
+     "title": "wind chimes - rough.wav",
+     "author": "Anthousai",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 2.00-4.20 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "high-pass 300 Hz",
+    "level to -24 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "cheer",
+   "file": "cheer.m4a",
+   "events": [
+    "power_gate",
+    "level_done",
+    "big_splat",
+    "row_firework"
+   ],
+   "what": "a small crowd cheering",
+   "seconds": 3.1,
+   "bytes": 26671,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/182571/",
+     "title": "Short Crowd Cheer.flac",
+     "author": "qubodup",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 0.30-3.40 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "level to -21 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "woo",
+   "file": "woo.m4a",
+   "events": [
+    "power_gate"
+   ],
+   "what": "a small audience saying \"woo!\"",
+   "seconds": 2.0,
+   "bytes": 17674,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/333420/",
+     "title": "Woo 3.wav",
+     "author": "jayfrosting",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 0.10-2.10 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "level to -21 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "boing",
+   "file": "boing.m4a",
+   "events": [
+    "miss_boing"
+   ],
+   "what": "one soft, out-of-tune ukulele string (friendly \"boing\", not a buzzer)",
+   "seconds": 0.7,
+   "bytes": 6772,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/409856/",
+     "title": "Cuerda desafina",
+     "author": "Pipe98x",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 0.00-0.70 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "pitch -3 st",
+    "level to -22 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "shuffle",
+   "file": "shuffle.m4a",
+   "events": [
+    "step_aside"
+   ],
+   "what": "sneakers shuffling on a wooden floor",
+   "seconds": 0.56,
+   "bytes": 5642,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/273384/",
+     "title": "wood_10b_startassneakers_shuffle.wav",
+     "author": "sturmankin",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 3.90-4.55 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "pitch +2 st",
+    "speed x1.2",
+    "high-pass 120 Hz",
+    "level to -24 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "clap",
+   "file": "clap.m4a",
+   "events": [
+    "rescue"
+   ],
+   "what": "a small crowd clapping",
+   "seconds": 2.18,
+   "bytes": 19501,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/138113/",
+     "title": "Small Crowd Applause 1",
+     "author": "snakebarney",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 0.20-2.40 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "pitch +1 st",
+    "level to -21 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "squeak",
+   "file": "squeak.m4a",
+   "events": [
+    "giggle_step"
+   ],
+   "what": "a squeaky dog toy (pitched per step in the app)",
+   "seconds": 0.34,
+   "bytes": 4062,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/379234/",
+     "title": "skiffy1.wav",
+     "author": "westington",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 0.66-1.00 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "level to -22 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "splat",
+   "file": "splat.m4a",
+   "events": [
+    "throw_pie",
+    "pie_back"
+   ],
+   "what": "a short wet splat",
+   "seconds": 0.37,
+   "bytes": 4069,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/402402/",
+     "title": "splatter.wav",
+     "author": "MattLeschuck",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 0.00-0.40 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "pitch -2 st",
+    "level to -20 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "splosh",
+   "file": "splosh.m4a",
+   "events": [
+    "throw_splat",
+    "big_splat"
+   ],
+   "what": "a wet slap on water",
+   "seconds": 0.45,
+   "bytes": 4814,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/166985/",
+     "title": "Two_Slaps_001.wav",
+     "author": "jamesabels",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 0.58-1.05 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "pitch -3 st",
+    "level to -20 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "giggle",
+   "file": "giggle.m4a",
+   "events": [
+    "throw_tickle"
+   ],
+   "what": "an adult giggle (pitched down a little)",
+   "seconds": 0.64,
+   "bytes": 6492,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/343991/",
+     "title": "giggle8.wav",
+     "author": "Reitanna",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 0.15-0.78 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "pitch -2 st",
+    "level to -22 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "laugh",
+   "file": "laugh.m4a",
+   "events": [
+    "boss_laugh"
+   ],
+   "what": "an adult man laughing (pitched down for the Broccoli)",
+   "seconds": 1.05,
+   "bytes": 9917,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/428990/",
+     "title": "Risada Grave.R.wav",
+     "author": "fley.erm",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 6.28-7.25 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "pitch -4 st",
+    "speed x0.92",
+    "level to -21 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "munch",
+   "file": "munch.m4a",
+   "events": [
+    "boss_munch"
+   ],
+   "what": "chewing a muffin",
+   "seconds": 2.17,
+   "bytes": 19358,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/390800/",
+     "title": "Chewing03.wav",
+     "author": "nickyg11p",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 5.15-7.30 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "pitch -2 st",
+    "high-pass 100 Hz",
+    "level to -22 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "stomp",
+   "file": "stomp.m4a",
+   "events": [
+    "boss_stomp"
+   ],
+   "what": "a hand hitting a mattress (soft thump)",
+   "seconds": 0.62,
+   "bytes": 6334,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/405705/",
+     "title": "found matress hit.wav",
+     "author": "apinasaundi",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 0.00-0.60 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "pitch -3 st",
+    "low-pass 2500 Hz",
+    "level to -18 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "swish",
+   "file": "swish.m4a",
+   "events": [
+    "boss_dodge",
+    "turnaround"
+   ],
+   "what": "a quick swish of a thrown object",
+   "seconds": 0.27,
+   "bytes": 3347,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/402657/",
+     "title": "Swish Toss",
+     "author": "deleted_user_6479820",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 0.04-0.31 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "pitch -1 st",
+    "level to -22 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "fabric",
+   "file": "fabric.m4a",
+   "events": [
+    "gate_whoosh"
+   ],
+   "what": "cotton fabric swooshing through air",
+   "seconds": 0.44,
+   "bytes": 4747,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/389170/",
+     "title": "Fabric Flap.wav",
+     "author": "akennedybrewer",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 0.06-0.50 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "level to -24 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "uke",
+   "file": "uke.m4a",
+   "events": [
+    "boss_dance"
+   ],
+   "what": "ukulele strumming",
+   "seconds": 4.3,
+   "bytes": 36499,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/425542/",
+     "title": "Ukulele.mp3",
+     "author": "Liz_Zabloudil",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 0.80-5.10 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "level to -22 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "fanfare",
+   "file": "fanfare.m4a",
+   "events": [
+    "start_jingle",
+    "learn_new",
+    "level_done"
+   ],
+   "what": "a real trumpet fanfare",
+   "seconds": 1.88,
+   "bytes": 16638,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/413204/",
+     "title": "Clean Trumpet Fanfare with Wobble.mp3",
+     "author": "joepayne",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 2.02-3.90 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "level to -21 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "ting",
+   "file": "ting.m4a",
+   "events": [
+    "help_light"
+   ],
+   "what": "one small bell",
+   "seconds": 0.39,
+   "bytes": 4390,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/125145/",
+     "title": "Single Bell 2.wav",
+     "author": "connersaw8",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 0.00-0.39 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "level to -24 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "hmph",
+   "file": "hmph.m4a",
+   "events": [
+    "boss_grumble"
+   ],
+   "what": "an adult man grumbling \"hmph\" (pitched down)",
+   "seconds": 0.36,
+   "bytes": 4072,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/427972/",
+     "title": "male grunt.wav",
+     "author": "lipalearning",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 0.55-0.92 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "pitch -3 st",
+    "level to -22 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "music",
+   "file": "music.m4a",
+   "events": [
+    "music_run",
+    "music_calm"
+   ],
+   "what": "ukulele strumming, used as a quiet background loop",
+   "seconds": 9.1,
+   "bytes": 93894,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/425542/",
+     "title": "Ukulele.mp3",
+     "author": "Liz_Zabloudil",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 0.10-9.20 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "high-pass 60 Hz",
+    "level to -30 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  }
+ ]
+}
