@@ -2,11 +2,12 @@
 // progress, facts, run, history and play time, keyed by the player id. If IndexedDB is not available the game runs from memory.
 import { CONFIG } from './config.js';
 import { newPlayerData, migrate } from './player.js';
+export { migrate };
 
-const DB = 'times-squad', VER = 1;
+const DB = 'times-squad', VER = 2; // v0.3: IDB version 2 adds 'levels' and 'ghosts' (spec 12.2); nothing is removed
 let db = null, mem = null;
-const STORES = ['settings', 'progress', 'facts', 'attempts', 'run', 'history', 'playtime'];
-export const defaultSettings = (today) => ({ schemaVersion: 2, sound: true, music: false, installTipDismissed: false, installTipLastShownOn: null,
+const STORES = ['settings', 'progress', 'facts', 'attempts', 'run', 'history', 'playtime', 'levels', 'ghosts'];
+export const defaultSettings = (today) => ({ schemaVersion: 3, sound: true, music: false, installTipDismissed: false, installTipLastShownOn: null,
   createdOn: today, lastSeenDay: today, lastPlayer: null });
 
 const req = (r) => new Promise((ok, bad) => { r.onsuccess = () => ok(r.result); r.onerror = () => bad(r.error); });
@@ -16,7 +17,7 @@ export async function open() {
     const r = indexedDB.open(DB, VER);
     r.onupgradeneeded = () => {
       const d = r.result;
-      for (const s of ['settings', 'progress', 'facts', 'run', 'playtime']) if (!d.objectStoreNames.contains(s)) d.createObjectStore(s);
+      for (const s of ['settings', 'progress', 'facts', 'run', 'playtime', 'levels', 'ghosts']) if (!d.objectStoreNames.contains(s)) d.createObjectStore(s);
       for (const s of ['attempts', 'history']) if (!d.objectStoreNames.contains(s)) d.createObjectStore(s, { autoIncrement: true }).createIndex('pid', 'pid');
     };
     db = await req(r);
@@ -31,7 +32,7 @@ const done = (t) => new Promise((ok, bad) => { t.oncomplete = () => ok(); t.oner
 export async function loadSettings(today) {
   const d = defaultSettings(today);
   if (!db) return { ...d, ...(mem.settings || {}) };
-  try { const s = await req(tx(['settings']).objectStore('settings').get('settings')); return { ...d, ...(s || {}) }; } catch { return d; }
+  try { const s = await req(tx(['settings']).objectStore('settings').get('settings')); return { ...d, ...(s || {}), schemaVersion: 3 }; } catch { return d; }
 }
 export async function saveSettings(s) {
   if (!db) { mem.settings = { ...s }; return; }
@@ -42,16 +43,27 @@ export async function loadPlayer(pid) {
   const pd = newPlayerData(pid);
   if (!db) return mem['p:' + pid] || (mem['p:' + pid] = pd);
   try {
-    const t = tx(['progress', 'facts', 'run', 'playtime']);
-    const [prog, facts, run, play] = await Promise.all([
+    const t = tx(['progress', 'facts', 'run', 'playtime', 'levels', 'ghosts']);
+    const range = IDBKeyRange.bound(pid + ':', pid + ':\uffff');
+    const [prog, facts, run, play, lv, lvKeys, gh, ghKeys] = await Promise.all([
       req(t.objectStore('progress').get(pid)),
       req(t.objectStore('facts').getAll(IDBKeyRange.bound(pid + ':', pid + ':\uffff'))),
       req(t.objectStore('run').get(pid)),
       req(t.objectStore('playtime').getAll(IDBKeyRange.bound(pid + ':', pid + ':\uffff'))),
+      req(t.objectStore('levels').getAll(range)), req(t.objectStore('levels').getAllKeys(range)),
+      req(t.objectStore('ghosts').getAll(range)), req(t.objectStore('ghosts').getAllKeys(range)),
     ]);
-    pd.progress = migrate(prog ? { ...pd.progress, ...prog } : pd.progress);
+    // Migration per player on load (spec 12.2): progress -> schemaVersion 3; a v0.2 runner run (no "kind") is deleted.
+    const [p3, changed] = migrate(prog ? { ...prog } : pd.progress);
+    pd.progress = p3;
+    (lvKeys || []).forEach((k, i) => { pd.levels[k.slice(pid.length + 1)] = lv[i]; });
+    (ghKeys || []).forEach((k, i) => { pd.ghosts[k.slice(pid.length + 1)] = gh[i]; });
+    const oldRun = run && !run.kind;
+    if (prog && (changed || oldRun)) {
+      const w = tx(['progress', 'run'], 'readwrite'); w.objectStore('progress').put(pd.progress, pid); if (oldRun) w.objectStore('run').delete(pid); await done(w);
+    }
     for (const f of facts || []) { const { pid: _p, ...rest } = f; pd.facts[f.factId] = rest; }
-    pd.run = run || null;
+    pd.run = run && run.kind ? run : null;
     pd.playtime = Object.fromEntries((play || []).map((p) => [p.day, p.activeSeconds]));
     const atts = await byPid('attempts', pid);
     pd.attempts = (atts || []).slice(-CONFIG.ATTEMPTS_KEEP).map(({ pid: _p, ...a }) => a);
@@ -98,7 +110,7 @@ export async function resetPlayer(pid) {
   try {
     const t = tx(STORES.filter((s) => s !== 'settings'), 'readwrite');
     t.objectStore('progress').delete(pid); t.objectStore('run').delete(pid);
-    t.objectStore('facts').delete(IDBKeyRange.bound(pid + ':', pid + ':\uffff'));
+    for (const s of ['facts', 'levels', 'ghosts']) t.objectStore(s).delete(IDBKeyRange.bound(pid + ':', pid + ':\uffff'));
     t.objectStore('playtime').delete(IDBKeyRange.bound(pid + ':', pid + ':\uffff'));
     for (const s of ['attempts', 'history']) {
       const keys = await req(t.objectStore(s).index('pid').getAllKeys(IDBKeyRange.only(pid)));
@@ -122,4 +134,24 @@ export async function pruneAttempts(pid) {
     for (const k of keys.slice(0, Math.max(0, keys.length - CONFIG.ATTEMPTS_KEEP))) t.objectStore('attempts').delete(k);
     await done(t);
   } catch { /* ignore */ }
+}
+
+// v0.3: one level result (best time, medal, Brain Star, ghost) and the checkpoint run record.
+export async function saveLevel(pd, levelId, { ghost = null } = {}) {
+  if (!db) return;
+  try {
+    const t = tx(['progress', 'levels', 'ghosts'], 'readwrite');
+    t.objectStore('progress').put(pd.progress, pd.pid);
+    if (pd.levels[levelId]) t.objectStore('levels').put(pd.levels[levelId], pd.pid + ':' + levelId);
+    if (ghost) t.objectStore('ghosts').put(ghost, pd.pid + ':' + levelId);
+    await done(t);
+  } catch { /* keep going from memory */ }
+}
+export async function saveRun(pd) {
+  if (!db) return;
+  try { const t = tx(['run'], 'readwrite'); if (pd.run) t.objectStore('run').put(pd.run, pd.pid); else t.objectStore('run').delete(pd.pid); await done(t); } catch { /* ignore */ }
+}
+export async function saveProgress(pd) {
+  if (!db) return;
+  try { const t = tx(['progress'], 'readwrite'); t.objectStore('progress').put(pd.progress, pd.pid); await done(t); } catch { /* ignore */ }
 }

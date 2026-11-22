@@ -3,7 +3,7 @@ import { CONFIG } from './config.js';
 import { factId, ruleFor } from './facts.js';
 import { weighted, pick } from './rng.js';
 
-const ok = (v, c) => Number.isInteger(v) && v !== c && v >= 2 && v <= 144;
+const ok = (v, c) => Number.isInteger(v) && v !== c && v >= 1 && v <= 100; // v0.3: values 1 to 100 (spec 5.4)
 export function swapDigits(c) {
   if (c >= 10 && c <= 99) { const t = Math.floor(c / 10), o = c % 10; if (t === o || o === 0 || t === 0) return null; return o * 10 + t; }
   if (c >= 100 && c <= 144) { const h = Math.floor(c / 100), t = Math.floor(c / 10) % 10, o = c % 10; if (t === o) return null; const v = h * 100 + o * 10 + t; return v === c ? null : v; }

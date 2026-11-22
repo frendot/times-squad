@@ -1,0 +1,30 @@
+{
+ "about": "Fox cut-out puppet (spec 10.1). Parts are drawn as flat painted shapes in code (js/puppet.js); this file holds the skeleton and the keyframe poses. Angles in degrees: 0 = limb straight down, + = toward the way Fox faces. bob in puppet units (Fox is 100 units tall).",
+ "skeleton": { "hip": [0, -40], "hipB": [-7, -40], "hipF": [7, -40], "thigh": 17, "shin": 16, "shoulder": [13, -55], "upperArm": 11, "foreArm": 10, "neck": [17, -63], "tailRoot": [-15, -44], "tailLen": 36 },
+ "keys": ["bob", "lean", "head", "tail", "hipB", "kneeB", "hipF", "kneeF", "armB", "elbB", "armF", "elbF"],
+ "run": [
+  [0, 8, -4, 20, -38, 30, 36, 8, 30, 50, -30, 40],
+  [-3, 9, -2, 14, -22, 62, 20, 28, 18, 50, -18, 40],
+  [0, 8, 0, 8, 8, 95, 0, 16, 0, 50, 0, 40],
+  [3, 7, -2, 14, 34, 58, -22, 12, -18, 40, 18, 50],
+  [0, 8, -4, 20, 36, 8, -38, 30, -30, 40, 30, 50],
+  [-3, 9, -2, 14, 20, 28, -22, 62, -18, 40, 18, 50],
+  [0, 8, 0, 8, 0, 16, 8, 95, 0, 40, 0, 50],
+  [3, 7, -2, 14, -22, 12, 34, 58, 18, 50, -18, 40]
+ ],
+ "poses": {
+  "idle":   [0, 0, 0, 25, -6, 4, 6, 4, -8, 30, 8, 30],
+  "idle2":  [-1.2, 0, 3, 35, -6, 6, 6, 6, -6, 34, 6, 34],
+  "jump":   [0, 4, -8, -10, 25, 85, 45, 70, -60, 30, 70, 30],
+  "fall":   [0, -2, 4, 40, -15, 25, 20, 30, -80, 20, 80, 20],
+  "land":   [-7, 6, 6, 30, -25, 70, 30, 80, -30, 50, 30, 50],
+  "bop":    [-4, 0, -6, 60, 30, 90, 40, 90, -110, 20, 110, 20],
+  "pushed": [0, -16, 10, 70, -30, 30, 15, 40, 60, 40, 80, 40],
+  "think":  [0, 0, 14, 30, -6, 4, 6, 4, -8, 30, 120, 140],
+  "dance1": [2, -6, -10, 40, -40, 20, 10, 40, -130, 30, 140, 30],
+  "dance2": [-2, 6, 10, -10, -10, 40, 40, 20, -150, 30, 120, 30],
+  "sink":   [-10, 0, 10, 50, 0, 60, 0, 60, -40, 40, 40, 40]
+ },
+ "faces": { "happy": "eyes open, small smile", "oops": "round eyes, small o mouth", "think": "eyes look up", "joy": "closed happy eyes, big smile" },
+ "colours": { "fur": "#f07d2c", "furDark": "#c85a14", "cream": "#fff4e0", "sock": "#3a2a2a", "outline": "#3a2116", "eye": "#24160f" }
+}

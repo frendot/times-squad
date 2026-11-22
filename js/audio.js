@@ -7,18 +7,17 @@ const stats = { total: 0, loaded: 0, failed: 0, played: 0 };
 self.__tsAudio = stats;
 let soundOn = true, musicOn = false, wantMusic = false, loading = null;
 const FILES = ['tap', 'pop', 'feet', 'glock', 'chimes', 'cheer', 'woo', 'boing', 'shuffle', 'clap', 'squeak', 'splat', 'splosh', 'giggle',
-  'laugh', 'munch', 'stomp', 'swish', 'fabric', 'uke', 'fanfare', 'ting', 'hmph', 'music'];
+  'laugh', 'munch', 'stomp', 'swish', 'fabric', 'uke', 'fanfare', 'ting', 'hmph', 'music', 'leafstep', 'rustle', 'sneeze', 'wind', 'spring'];
 // Event -> [file, playback rate, gain]. Pitch steps use the playback rate of the same real recording.
 const EVENTS = {
-  ui_tap: ['tap', 1, 0.8], start_jingle: ['fanfare', 1, 0.9], go: ['fanfare', 1.12, 0.7],
-  lane: ['swish', 1.5, 0.35], jump: ['fabric', 1.25, 0.6], slide: ['shuffle', 1.1, 0.6],
-  sign: ['ting', 1, 0.55], right: ['pop', 1, 0.9], streak_step: ['glock', 1, 0.45], jam: ['boing', 1, 0.8],
-  zap: ['swish', 1.9, 0.7], poof: ['pop', 0.7, 1], coin: ['ting', 1.6, 0.3],
-  power: ['fanfare', 1.26, 0.85], power_end: ['glock', 0.8, 0.5], shield_pop: ['glock', 1.2, 0.8], smash: ['stomp', 1.1, 0.9],
-  boss_in: ['stomp', 0.9, 1], boss_grumble: ['hmph', 0.85, 0.9], throw: ['swish', 0.9, 0.7], boss_hit: ['splat', 1, 1],
-  boss_laugh: ['laugh', 0.85, 0.8], boss_poof: ['splosh', 0.8, 1], cheer: ['cheer', 1, 0.7], tile_up: ['glock', 1.26, 0.6],
-  crash: ['stomp', 1, 1], crash_boing: ['boing', 0.8, 0.8], munch: ['munch', 1, 0.8], giggle: ['giggle', 1, 0.6],
-  squeak: ['squeak', 1.3, 0.5], woo: ['woo', 1, 0.8], clap: ['clap', 1, 0.7], feet: ['feet', 1, 0.5], chimes: ['chimes', 1, 0.6], uke: ['uke', 1, 0.6],
+  ui_tap: ['tap', 1, 0.8], start_jingle: ['fanfare', 1, 0.9],
+  jump: ['fabric', 1.25, 0.55], jump_big: ['spring', 1, 0.8], land: ['leafstep', 1, 0.45], step: ['leafstep', 1.15, 0.22], mushroom: ['spring', 1.2, 0.8],
+  pit: ['splosh', 1.1, 0.7], pit_back: ['boing', 1.3, 0.6], sign: ['ting', 1, 0.55], acorn: ['ting', 1.6, 0.35], flower: ['chimes', 1.2, 0.5],
+  power: ['fanfare', 1.26, 0.8], power_end: ['glock', 0.8, 0.5], bubble_in: ['pop', 1.3, 0.6], bubble_pop: ['pop', 0.8, 0.9],
+  bop: ['pop', 0.7, 1], bump: ['hmph', 1.2, 0.6], right: ['chimes', 1, 0.7], wrong: ['squeak', 1, 0.5], curtain: ['rustle', 0.9, 0.7],
+  checkpoint: ['glock', 1.26, 0.6], finish: ['fanfare', 1, 0.9], medal: ['clap', 1, 0.7], cheer: ['cheer', 1, 0.7],
+  attack_warn: ['hmph', 0.85, 0.9], attack_spin: ['wind', 1, 0.9], attack_stomp: ['stomp', 1, 0.9], attack_sneeze: ['sneeze', 1, 1], boss_bop: ['splat', 1, 1], boss_win: ['splosh', 0.8, 1],
+  squeak: ['squeak', 1.3, 0.5], giggle: ['giggle', 1, 0.6], woo: ['woo', 1, 0.8],
 };
 const STEP = (n) => Math.pow(2, n / 12);
 const SCALE = [0, 2, 4, 5, 7, 9, 11, 12, 14, 16, 17, 19];

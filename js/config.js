@@ -1,43 +1,42 @@
-// All tunable numbers for Times Squad v0.2 (the runner). Change these after playtests; no other file needs to change.
+// All tunable numbers for Times Squad v0.3 (the side-scroller). 1 T = 1 tile. Change these after playtests.
 export const CONFIG = {
-  VERSION: '0.2.0',
+  VERSION: '0.3.0',
   PLAYERS: ['fox', 'panda', 'frog', 'owl'],
-  // ---- Runner ----
-  STEP_S: 1 / 60,                 // fixed simulation step
-  SPEED_START: 11, SPEED_GAIN: 0.09, SPEED_MAX: 27, // m/s; brisk start, +0.09 m/s every second
-  LANE_W: 2.2, LANE_SWITCH_S: 0.13,
-  JUMP_V: 9, GRAVITY: 27, SLIDE_S: 0.65,
-  SPAWN_AHEAD_M: 140,
-  OBSTACLE_GAP_M: [30, 14],       // gap between obstacle groups at start speed / at max speed (plus some seeded spread)
-  OBSTACLE_SPREAD_M: 12,
-  SAFE_START_M: 40,
-  // ---- Maths ----
-  QUESTION_EVERY_M: [95, 60],     // from start / at max speed
-  THINK_S: [3.4, 2.3],            // how early the sign shows before the numbers reach you (easy fact / hard + fast)
-  MONSTER_AHEAD_S: 1.15,          // a monster appears this many seconds ahead after a pickup
-  JAM_S: 1.5, HINT_S: 1.5,
-  BLASTER_MAX_CHARGE: 3, ZAP_RANGE_M: 30,
-  WANDER_MONSTER_EVERY_M: 160,
-  // Harder with distance: which tables join the mix (all facts up to 12 x 12 by 1100 m)
-  BANDS: [
-    { from: 0, tables: [2, 5, 10, 3, 4] },
-    { from: 250, tables: [2, 3, 4, 5, 10, 6, 11] },
-    { from: 550, tables: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
-    { from: 1100, tables: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] },
-  ],
-  MIX: { due: 0.4, learning: 0.3, fresh: 0.2, known: 0.1 },
-  NO_REPEAT_LAST: 3,
-  // ---- Boss ----
-  BOSS_EVERY_M: 500, BOSS_HP: [4, 8], BOSS_Q_EVERY_M_FACTOR: 0.6, BOSS_THROW_EVERY_S: 2.6, BOSS_COINS: 50,
-  // ---- Powers ----
-  POWER_STREAK: 5, POWERS: ['shield', 'magnet', 'jetpack', 'giant'],
-  POWER_S: { shield: 12, magnet: 8, jetpack: 5, giant: 6 },
-  POWER_BOX_EVERY_M: 330, MAGNET_RANGE_M: 14, JET_Y: 3.2,
-  // ---- Score and coins ----
-  SCORE: { meter: 1, coin: 5, right: 20, zap: 25, boss: 300, smash: 15 },
-  COIN_LINE_EVERY_M: 55,
-  TIER_COINS: { bronze: 10, silver: 20, gold: 40 },
-  // ---- Learning (same spaced repetition as v0.1) ----
+  // ---- view and physics (spec 4.1) ----
+  STEP_S: 1 / 60, VIEW_W: 20, VIEW_H: 11.25, TILE_PX: 48,
+  RUN_SPEED: 7, RUN_ACCEL_S: 0.15, GRAVITY: 50,
+  JUMP_V: 17.3,               // 3 T high
+  HOP_CUT_V: 12.2,            // letting go early: about 1.5 T hop (velocity is cut to this)
+  BOOTS_JUMP_V: 24.5,         // 6 T high
+  BOUNCE_V: 22.4,             // bounce mushroom: 5 T
+  BOP_V: 14.2,                // bop bounce: 2 T
+  COYOTE_S: 0.10, JUMP_BUFFER_S: 0.12,
+  JUMP_HELP: { COYOTE_S: 0.2, JUMP_MULT: 1.15 },
+  FOX_W: 1, FOX_H: 1.25,
+  PIT_SINK_S: 0.6,
+  // ---- layout (spec 4.2 - 4.5) ----
+  MAX_GAP_T: 3.5, MAX_STEP_T: 2.5,
+  BAY_W: 15, PLAT_W: 3, PLAT_GAP: 2, PLAT_Y: 2.5,
+  SIGN_BEFORE_BAY_T: [35, 40],
+  CURTAIN_OPEN_S: 0.6,
+  // ---- answers (spec 5.6) ----
+  CARD_S: 3.0, CARD2_S: 2.0, SINK_S: 0.4,
+  RETURN_AFTER: [2, 3],
+  MISS_LOOKBACK_DAYS: 14,
+  POWER_ON_Q: [2, 4, 6],
+  // ---- monsters and powers (spec 8) ----
+  PINE_SPEED: 1.5, FROG_HOP_T: 2, FROG_EVERY_S: 1.6,
+  PUSH_T: 2, BLINK_S: 1, DROP_ACORNS: 3, FLOWER_ACORNS: 3,
+  POWER_S: 8, POWERS: ['boots', 'bubble'],
+  // ---- medals (spec 6.2): Gold = E x 1.4, Silver = E x 1.9, rounded up to 5 s. E is measured by tools/expert.mjs. ----
+  GOLD_X: 1.4, SILVER_X: 1.9, ROUND_TO_S: 5,
+  EXPERT_S: { 'x2-L1': 112.4, 'x2-L2': 123.7, 'x2-L3': 116.2, 'x2-RR': 61.0 },  // replaced by measured values (see PROGRESS.md)
+  GHOST_HZ: 10, GHOST_ALPHA: 0.4,
+  // ---- boss (spec 7) ----
+  BOSS_BOPS: 5, BOSS_DRIFT_V: 0.8, BOSS_DRIFT_T: 2, BOSS_SHRINK: 0.08, ATTACK_WARN_S: 1.2, ATTACK_S: 3,
+  ATTACKS: ['spin', 'stomp', 'sneeze', 'spin'], WIND_V: 2,
+  // ---- learning (same engine as v0.1 / v0.2) ----
+  MAX_TABLE: 10,
   GOLD_MEDIAN_MS: 3000, GOLD_DAYS: 3, SILVER_DAYS: 2,
   BOX_INTERVAL_DAYS: [0, 0, 1, 3, 7, 14],
   CONFUSION_DAYS: 14,
@@ -46,5 +45,9 @@ export const CONFIG = {
   RULE_KEEP_PROB: 0.75,
   ATTEMPTS_KEEP: 2000, HISTORY_KEEP: 200, PLAYTIME_KEEP_DAYS: 60,
   IDLE_STOP_MS: 60000, INSTALL_TIP_EVERY_DAYS: 7, RESET_HOLD_MS: 3000,
-  RETRY_GUARD_MS: 250,
 };
+// Medal targets in seconds for a level (rounded up to 5 s).
+export function targets(levelId) {
+  const E = CONFIG.EXPERT_S[levelId] || 120, up = (s) => Math.ceil(s / CONFIG.ROUND_TO_S) * CONFIG.ROUND_TO_S;
+  return { gold: up(E * CONFIG.GOLD_X), silver: up(E * CONFIG.SILVER_X) };
+}

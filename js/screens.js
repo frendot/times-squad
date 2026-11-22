@@ -1,4 +1,4 @@
-// Non-run screens: start, install tip, player picker, how to play, home, shop, Times Map, parent gate and page.
+// Screens outside a level: start, install tip, player picker, how to play, Season map, level start, Times Map, parent gate and page.
 import { CONFIG } from './config.js';
 import { S, t, tp, show, el, $, $$, tapOnce, dots, today, Stop, esc } from './ui.js';
 import * as A from './audio.js';
@@ -9,12 +9,13 @@ import { art } from './artpack.js';
 const face = (p) => { const a = art([p, 'portrait']); return a ? `<img class="por" src="${a.img.src}" alt="">` : ANIMALS[p]; };
 import { factId, parseFact, groupOf } from './facts.js';
 import { addDays, daysBetween } from './learn.js';
-import { runScreen } from './game.js';
-import { SKINS, BLASTERS, buy } from './player.js';
-import { mk, blob } from './sprites.js';
-import { iconCanvas } from './render.js';
+import { playLevel, loadLevel, fmtTime, fmtTarget } from './game.js';
+import { LEVEL_IDS } from './player.js';
+import { iconCanvas, foxCanvas } from './render.js';
+import { targets } from './config.js';
 
 const tapSound = () => A.play('ui_tap');
+const bossImg = () => { const a = art(['boss', 'broccoli']); return a ? `<img class="bimg" src="${a.img.src}" alt="">` : broccoli('grumpy'); };
 const safe = (p) => p.catch((e) => { if (!(e instanceof Stop)) throw e; });
 let installPrompt = null;
 self.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installPrompt = e; });
@@ -22,8 +23,9 @@ const standalone = () => (self.matchMedia && matchMedia('(display-mode: standalo
 
 // ---- S1 Start ----
 export function start() {
-  const scr = show('start', `<div class="title"><h1 class="logo">${t('app_name')}</h1><div class="hero">${CONFIG.PLAYERS.map((p) => `<span class="hrun">${ANIMALS[p]}</span>`).join('')}<span class="hboss">${broccoli('grumpy')}</span></div>
+  const scr = show('start', `<div class="title"><h1 class="logo">${t('app_name')}</h1><div class="hero"><span class="hfox"></span><span class="hboss">${bossImg()}</span></div>
     <p class="tap">${ICON.play} ${t('start')}</p></div><button class="icon grownup corner" aria-label="${tp('grown_ups')}">${ICON.grownup}</button>`);
+  $('.hfox', scr).appendChild(foxCanvas('dance1', 170, 'joy'));
   $('.grownup', scr).addEventListener('click', (e) => { e.stopPropagation(); A.unlock(); parentGate(() => start()); });
   const go = () => { removeEventListener('keydown', key); A.unlock(); A.play('start_jingle'); afterStart(); };
   const key = (e) => { if (S.screen === 'start' && ['Enter', 'Space'].includes(e.code)) { e.preventDefault(); go(); } };
@@ -52,7 +54,7 @@ function installTip() {
 export async function picker() {
   const sums = await store.playerSummaries();
   const cards = CONFIG.PLAYERS.map((p) => {
-    const s = sums[p]; const best = s && s.runner && s.runner.best ? `${s.runner.best} m` : '';
+    const s = sums[p]; const best = s && s.scroller && s.scroller.acornsTotal ? `<i class="ac"></i>${s.scroller.acornsTotal}` : '';
     return `<button class="pick" data-p="${p}" aria-label="${t(p)}">${face(p)}<span class="pbest">${best}</span></button>`;
   }).join('');
   const scr = show('picker', `<h1>${t('who')}</h1><div class="picks">${cards}</div>`);
@@ -68,112 +70,96 @@ export async function choosePlayer(pid) {
   if (!S.pd.progress.howToSeen) return howTo();
   goHome();
 }
-// ---- S3 How to play ----
+// ---- S3 How to play (3 cards) ----
 export async function howTo(back) {
-  const arrows = (k) => `<span class="key">${k}</span>`;
+  const key = (k) => `<span class="key">${k}</span>`;
   const cards = [
-    () => `<h2>${t('how_title')}</h2><div class="ctl"><div class="ctlrow">${arrows('&larr;')}${arrows('&rarr;')}<span>${t('how_lane')}</span></div>
-      <div class="ctlrow">${arrows('&uarr;')}<span>${t('how_jump')}</span></div><div class="ctlrow">${arrows('&darr;')}<span>${t('how_slide')}</span></div>
-      <p class="small">${t('how_keys')}</p><div class="swipes"><i class="sw l"></i><i class="sw r"></i><i class="sw u"></i><i class="sw d"></i></div><p class="small">${t('how_swipe')}</p></div>`,
-    () => `<h2>${t('how_math')}</h2><div class="sign mini">6 x 7</div><div class="lanesdemo"><span>36</span><span class="ok">42</span><span>48</span></div><p>${t('how_math_1')}</p><p>${t('how_math_2')}</p>`,
-    () => `<h2>${t('how_power')}</h2><div class="powdemo"></div><p>${t('how_power_1')}</p><p>${t('how_power_2')}</p>`,
+    () => `<h2>${t('how_title')}</h2><div class="howfox"></div><div class="ctl"><div class="ctlrow">${key('&larr;')}${key('&rarr;')}<span>${t('how_move')}</span></div>
+      <div class="ctlrow">${key('&uarr;')}${key('Space')}<span>${t('how_jump')}</span></div><p class="small">${t('how_keys')}</p><p class="small">${t('how_touch')}</p><p class="small">${t('tip_jump')}</p></div>`,
+    () => `<h2>${t('how_math')}</h2><div class="sign mini">2 x 7</div><div class="baydemo"><span>12</span><span class="ok">14</span><span>16</span></div><p>${t('how_math_1')}</p><p>${t('how_math_2')}</p><p>${t('how_math_3')}</p>`,
+    () => `<h2>${t('how_more')}</h2><div class="powdemo"></div><p>${t('how_more_1')}</p><p>${t('how_more_2')}</p><p>${t('how_more_3')}</p>`,
   ];
   for (let i = 0; i < cards.length; i++) {
     const scr = show('howto', `<div class="card big">${cards[i]()}<div class="dotsnav">${cards.map((_, j) => `<i class="${j === i ? 'on' : ''}"></i>`).join('')}</div>
       <div class="row"><button class="btn go next">${t('next')} ${ICON.next}</button><button class="btn alt skip">${t('skip')}</button></div></div>`);
-    if (i === 2) { const box = $('.powdemo', scr); for (const k of CONFIG.POWERS) { const c = iconCanvas(k); box.appendChild(c); } }
+    if (i === 0) $('.howfox', scr).appendChild(foxCanvas('jump', 110));
+    if (i === 2) { const box = $('.powdemo', scr); const pc = art(['monster', 'pinecone']); if (pc) box.appendChild(el(`<img class="mini-mon" src="${pc.img.src}" alt="">`)); for (const k of CONFIG.POWERS) box.appendChild(iconCanvas(k)); }
+    const k = (e) => { if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); $('.next', scr).click(); } };
+    addEventListener('keydown', k);
     const b = await safe(tapOnce([$('.next', scr), $('.skip', scr)]));
+    removeEventListener('keydown', k);
     if (!b) return;
     tapSound();
     if (b.classList.contains('skip')) break;
   }
-  S.pd.progress.howToSeen = true; store.saveGate(S.pd, { keepRun: true });
+  S.pd.progress.howToSeen = true; store.saveProgress(S.pd);
   if (back) return back();
   goHome();
 }
-// ---- Home ----
-export function goHome() {
-  const pd = S.pd, R = pd.progress.runner;
+// ---- S5 Season map (home) ----
+const MEDAL = ['', 'bronze', 'silver', 'gold', 'fox'];
+export function goHome(autoLevel) {
+  const pd = S.pd, sc = pd.progress.scroller;
   A.startMusic();
-  const scr = show('home', `<div class="topbar"><button class="icon me" aria-label="${t(S.pid)}">${ANIMALS[S.pid]}</button><span class="sp"></span>
-      <button class="icon howbtn" aria-label="?">${ICON.help}</button><button class="icon mapbtn" aria-label="${t('map')}">${ICON.map}</button></div>
-    <h1 class="logo small">${t('app_name')}</h1>
-    <div class="homehero"><span class="hrun big">${face(S.pid)}</span></div>
-    <div class="homestats"><div><span>${t('best')}</span><b class="hbest">${R.best} m</b></div><div><span>${t('coins')}</span><b class="hcoins"><i class="coin"></i>${R.coins}</b></div></div>
-    <button class="btn huge play">${ICON.play} ${t('run')}</button>
-    <p class="small keyhint">${t('home_hint')}</p>
-    <button class="btn alt shopb">${t('shop')}</button>
+  if (autoLevel) return levelStart(autoLevel);
+  const node = (id, i) => {
+    const open = sc.unlocked.includes(id), r = pd.levels[id] || {};
+    const label = id === 'x2-RR' ? t('review_road') : id === 'spring-boss' ? t('boss_name') : t('level_n', { n: i + 1 });
+    return `<button class="node n-${id} ${open ? 'open' : 'locked'} ${r.medal ? 'done' : ''}" data-l="${id}" ${open ? '' : 'aria-disabled="true"'}>
+      ${id === 'spring-boss' ? bossImg().replace('bimg', 'nimg') : id === 'x2-RR' ? '' : ''}<span class="nm">${label}</span><span class="sub">${t('lv_' + id)}</span>${r.medal ? `<i class="md m${r.medal}"></i>` : ''}${r.brainStar ? '<i class="bs"></i>' : ''}${open ? '' : '<i class="lock"></i>'}</button>`;
+  };
+  const scr = show('home', `<div class="topbar"><button class="icon me" aria-label="${t(S.pid)}">${ANIMALS[S.pid]}</button><h1>${t('map_title')}</h1><span class="sp"></span>
+      <span class="acorns"><i class="ac"></i>${sc.acornsTotal || 0}</span><button class="icon howbtn" aria-label="?">${ICON.help}</button><button class="icon mapbtn" aria-label="${t('map')}">${ICON.map}</button></div>
+    <div class="seasons"><div class="season spring"><h2>${t('season_spring')} <small>${t('times_2')}</small></h2><div class="path">${LEVEL_IDS.map(node).join('')}</div></div>
+      <div class="later">${['summer', 'autumn', 'winter'].map((s) => `<div class="season off s-${s}"><span>${t('season_later')}</span></div>`).join('')}</div></div>
     <button class="icon grownup corner" aria-label="${tp('grown_ups')}">${ICON.grownup}</button>`);
-  const go = () => { removeEventListener('keydown', key); tapSound(); A.stopMusic(); runScreen({ home: goHome }); };
-  const key = (e) => { if (S.screen !== 'home') return removeEventListener('keydown', key); if (['Enter', 'Space', 'ArrowUp'].includes(e.code)) { e.preventDefault(); go(); } };
+  for (const b of $$('.node.open', scr)) b.addEventListener('click', () => { tapSound(); levelStart(b.dataset.l); });
+  for (const b of $$('.node.locked', scr)) b.addEventListener('click', () => { A.play('squeak'); b.classList.remove('nope'); void b.offsetWidth; b.classList.add('nope'); });
+  const key = (e) => { if (S.screen !== 'home') return removeEventListener('keydown', key); if (['Enter', 'Space'].includes(e.code)) { e.preventDefault(); removeEventListener('keydown', key); const open = sc.unlocked.filter((x) => !(pd.levels[x] && pd.levels[x].medal)); levelStart(open[0] || sc.unlocked[sc.unlocked.length - 1]); } };
   addEventListener('keydown', key);
-  $('.play', scr).addEventListener('click', go, { once: true });
-  $('.shopb', scr).addEventListener('click', () => { tapSound(); shop(); });
   $('.mapbtn', scr).addEventListener('click', () => { tapSound(); timesMap(goHome); });
   $('.howbtn', scr).addEventListener('click', () => { tapSound(); howTo(); });
   $('.me', scr).addEventListener('click', () => { tapSound(); picker(); });
   $('.grownup', scr).addEventListener('click', () => { tapSound(); parentGate(goHome); });
 }
-// ---- Shop: skins and blasters, paid with coins from playing. No real money, ever. ----
-function swatch(item, kind) {
-  return mk(72, 72, (g) => {
-    if (kind === 'skin') { blob(g, (q) => q.arc(36, 40, 26, 0, 7), item.color || '#f0883a', 5); if (item.star) blob(g, (q) => q.arc(36, 20, 9, 0, 7), '#ffd23f', 4); }
-    else { blob(g, (q) => q.roundRect(10, 26, 46, 22, 8), '#5b5f97', 5); const c = item.color === 'rainbow' ? (() => { const k = g.createLinearGradient(50, 0, 70, 0); k.addColorStop(0, '#ff5d73'); k.addColorStop(0.5, '#ffd23f'); k.addColorStop(1, '#4fc3ff'); return k; })() : item.color; blob(g, (q) => q.arc(58, 37, 10, 0, 7), c, 5); }
-  });
+// ---- S6 Level start ----
+export async function levelStart(id) {
+  const pd = S.pd, r = pd.levels[id] || {};
+  await loadLevel(id);
+  const T = targets(id), boss = id === 'spring-boss', rr = id === 'x2-RR';
+  const idx = LEVEL_IDS.indexOf(id);
+  const scr = show('lstart', `<div class="card lst"><p class="small">${t('season_spring')} · ${t('times_2')}</p><h1>${boss ? t('boss_name') : rr ? t('review_road') : t('level_n', { n: idx + 1 })}</h1><h2>${t('lv_' + id)}</h2>
+    ${boss ? `<p>${t('boss_hint')}</p>` : rr ? `<p>${t('rr_hint')}</p>` : ''}
+    ${!boss && r.plays ? `<div class="targets"><span class="md m3"></span>${t('gold_target', { t: fmtTarget(T.gold) })}<span class="md m2"></span>${t('silver_target', { t: fmtTarget(T.silver) })}</div><p class="small">${t('best')}: ${r.bestSteps ? fmtTime(r.bestSteps) : '-'}</p>` : !boss ? `<p class="small">${t('first_play')}</p>` : ''}
+    <div class="row"><button class="btn alt backb">${t('back')}</button><button class="btn go huge play">${ICON.play} ${t('play')}</button></div></div>`);
+  const go = () => { removeEventListener('keydown', key); tapSound(); run(id); };
+  const key = (e) => { if (S.screen !== 'lstart') return removeEventListener('keydown', key); if (['Enter', 'Space'].includes(e.code)) { e.preventDefault(); go(); } };
+  addEventListener('keydown', key);
+  $('.play', scr).addEventListener('click', go, { once: true });
+  $('.backb', scr).addEventListener('click', () => { removeEventListener('keydown', key); tapSound(); goHome(); });
 }
-export function shop() {
-  const pd = S.pd, R = pd.progress.runner;
-  const row = (item, kind) => {
-    const own = R.owned.includes(item.id), on = R[kind] === item.id;
-    return `<button class="item ${own ? 'own' : ''} ${on ? 'on' : ''}" data-id="${item.id}" data-k="${kind}"><span class="sw"></span><span class="nm">${t(item.id)}</span>
-      <span class="cost">${on ? t('wearing') : own ? t('use') : `<i class="coin"></i>${item.cost}`}</span></button>`;
-  };
-  const scr = show('shop', `<div class="topbar"><button class="icon backb" aria-label="${t('back')}">${ICON.back}</button><h1>${t('shop')}</h1><span class="sp"></span><b class="hcoins"><i class="coin"></i>${R.coins}</b></div>
-    <p class="small">${t('shop_note')}</p><h2>${t('skins')}</h2><div class="items">${SKINS.map((x) => row(x, 'skin')).join('')}</div>
-    <h2>${t('blasters')}</h2><div class="items">${BLASTERS.map((x) => row(x, 'blaster')).join('')}</div><div class="banner"></div>`);
-  for (const b of $$('.item', scr)) { const list = b.dataset.k === 'skin' ? SKINS : BLASTERS; $('.sw', b).appendChild(swatch(list.find((x) => x.id === b.dataset.id), b.dataset.k)); }
-  $('.backb', scr).addEventListener('click', () => { tapSound(); goHome(); });
-  for (const b of $$('.item', scr)) b.addEventListener('click', () => {
-    const list = b.dataset.k === 'skin' ? SKINS : BLASTERS, item = list.find((x) => x.id === b.dataset.id);
-    const r = buy(pd, item);
-    if (r === 'short') { A.play('jam'); const m = $('.banner', scr); m.textContent = t('need_coins', { n: item.cost - R.coins }); m.classList.remove('show'); void m.offsetWidth; m.classList.add('show'); return; }
-    if (r === 'ok') A.play('power'); else tapSound();
-    R[b.dataset.k] = item.id; store.saveGate(pd, { keepRun: true }); shop();
-  });
-}
-// ---- (v0.1 results screen removed: the run ends on the crash card) ----
-// ---- S12 Times Map ----
+function run(id) { playLevel(id, { exit: (nx) => (nx ? levelStart(nx) : goHome()), again: () => run(id) }); }
+// ---- S12 Times Map (1 to 10) ----
 export function mapGrid(pd, { readOnly = false } = {}) {
-  const shown = pd.progress.fireworksShown || [];
-  let h = '<div class="grid"><i class="hd"></i>';
-  for (let c = 2; c <= 12; c++) h += `<i class="hd">${c}${shown.includes('col-' + c) ? ICON.ribbon : ''}</i>`;
-  for (let r = 2; r <= 12; r++) {
-    h += `<i class="hd">${r}${shown.includes('row-' + r) ? ICON.ribbon : ''}</i>`;
-    for (let c = 2; c <= 12; c++) {
+  let h = '<div class="grid g10"><i class="hd">x</i>';
+  for (let c = 1; c <= 10; c++) h += `<i class="hd">${c}</i>`;
+  for (let r = 1; r <= 10; r++) {
+    h += `<i class="hd">${r}</i>`;
+    for (let c = 1; c <= 10; c++) {
       const id = factId(r, c), f = pd.facts[id];
       const tier = f ? f.tier : 'grey';
       const icon = tier === 'gold' ? ICON.star : tier === 'silver' ? '<b></b><b></b>' : tier === 'bronze' ? '<b></b>' : '';
-      h += `<${readOnly ? 'span' : 'button'} class="cell t-${tier} w1" data-r="${r}" data-c="${c}" aria-label="${r} x ${c}">${icon}</${readOnly ? 'span' : 'button'}>`;
+      const w1 = r === 2 || c === 2;
+      h += `<${readOnly ? 'span' : 'button'} class="cell t-${tier} ${w1 ? 'w1' : 'w0'}" data-r="${r}" data-c="${c}" aria-label="${r} x ${c}">${icon}</${readOnly ? 'span' : 'button'}>`;
     }
   }
   return h + '</div>';
 }
-const fullGold = (pd) => {
-  const g = (r, c) => pd.facts[factId(r, c)] && pd.facts[factId(r, c)].tier === 'gold';
-  const out = [];
-  for (let n = 2; n <= 12; n++) { let all = true; for (let m = 2; m <= 12; m++) if (!g(n, m)) { all = false; break; } if (all) out.push('row-' + n, 'col-' + n); }
-  return out;
-};
 export function timesMap(back) {
   const pd = S.pd;
-  const fresh = fullGold(pd).filter((k) => !(pd.progress.fireworksShown || []).includes(k));
   const scr = show('map', `<div class="topbar"><button class="icon backb" aria-label="${t('back')}">${ICON.back}</button><h1>${t('map')}</h1></div>
-    ${mapGrid(pd)}<div class="key"><span class="cell t-grey w1"></span>${t('tier_grey')}<span class="cell t-bronze"><b></b></span>${t('tier_bronze')}
-    <span class="cell t-silver"><b></b><b></b></span>${t('tier_silver')}<span class="cell t-gold">${ICON.star}</span>${t('tier_gold')}</div><div class="firework"></div><div class="layer"></div>`);
-  if (fresh.length) {
-    pd.progress.fireworksShown = [...(pd.progress.fireworksShown || []), ...fresh]; store.saveGate(pd, { keepRun: true });
-    A.play('cheer');
-  }
+    <div class="mapwrap">${mapGrid(pd)}<div class="key"><span class="cell t-grey w1"></span>${t('tier_grey')}<span class="cell t-bronze"><b></b></span>${t('tier_bronze')}
+    <span class="cell t-silver"><b></b><b></b></span>${t('tier_silver')}<span class="cell t-gold">${ICON.star}</span>${t('tier_gold')}</div></div><div class="layer"></div>`);
   $('.backb', scr).addEventListener('click', () => { tapSound(); back(); });
   for (const c of $$('.cell[data-r]', scr)) c.addEventListener('click', () => { tapSound(); tileDetail(scr, +c.dataset.r, +c.dataset.c); });
 }
@@ -191,7 +177,7 @@ function tileDetail(scr, r, c) {
   const layer = $('.layer', scr);
   const node = el(`<div class="mp tile"><h2></h2><div class="mpic"></div><p class="sl"></p><button class="btn go">${t('ok')}</button></div>`);
   $('h2', node).textContent = met ? `${t('fact', { a: r, b: c, c: r * c })} · ${t('tier_' + f.tier)}` : `${t('fact_q', { a: r, b: c })} · ${t('coming_soon')}`;
-  $('.mpic', node).appendChild(dots(r, c, { max: 240, maxH: 200 }));
+  $('.mpic', node).appendChild(dots(r, c, { max: 240, maxH: 160 }));
   $('.sl', node).textContent = met ? strategyLine(r, c) : '';
   layer.innerHTML = ''; layer.appendChild(node); layer.classList.add('show');
   $('.go', node).addEventListener('click', () => { tapSound(); layer.classList.remove('show'); layer.innerHTML = ''; });
@@ -255,23 +241,25 @@ export async function parentPage(pid, back) {
   const play = await store.playtimeFor(pid);
   const d = today(), mon = mondayOf(d);
   const secs = Object.entries(play).filter(([day]) => day >= mon && day <= d).reduce((s, [, v]) => s + v, 0) + (pid === S.pid ? S.unsaved || 0 : 0);
-  const R = pd.progress.runner, lastRun = (pd.history || []).filter((h) => h.m !== undefined).slice(-1)[0];
-  const where = lastRun ? tp('last_run', { m: lastRun.m, r: lastRun.right, w: lastRun.wrong }) : tp('no_runs');
+  const sc = pd.progress.scroller, lastRun = (pd.history || []).filter((h) => h.level).slice(-1)[0];
+  const where = lastRun ? tp('last_run', { name: t('lv_' + lastRun.level), r: lastRun.right, w: lastRun.notYet }) : tp('no_runs');
+  const lvRows = LEVEL_IDS.filter((id) => pd.levels[id]).map((id) => { const r = pd.levels[id]; return `<li>${esc(tp('level_row', { name: t('lv_' + id), best: r.bestSteps ? fmtTime(r.bestSteps) : '-', medal: tp('medal_' + (r.medal || 0)), plays: r.plays || 0 }))}</li>`; }).join('');
   const tricky = trickiest(pd, d);
   let idea = tricky.length ? ideaFor(tricky[0].id) : null;
   if (!idea) { const learn = pd.attempts.slice().reverse().find((a) => pd.facts[a.factId] && pd.facts[a.factId].box <= 2); idea = learn ? ideaFor(learn.factId) : [tp('no_idea')]; }
   const tabs = CONFIG.PLAYERS.map((p) => `<button class="tab ${p === pid ? 'on' : ''}" data-p="${p}" aria-label="${t(p)}">${ANIMALS[p]}</button>`).join('');
   const scr = show('parent', `<div class="topbar"><button class="icon backb" aria-label="${tp('back')}">${ICON.back}</button><h1>${tp('parent_page')}</h1></div>
     <div class="ptext"><div class="tabs"><span>${tp('player')}</span>${tabs}</div>
-    <p>${esc(where)}</p><p>${esc(tp('runner_stats', { best: R.best, runs: R.runs, coins: R.coins }))}</p><p>${tp('week', { n: Math.round(secs / 60) })}</p>
+    <p>${esc(where)}</p><h3>${tp('levels')}</h3>${lvRows ? `<ul>${lvRows}</ul>` : `<p>${tp('no_levels')}</p>`}${(sc.reviewList || []).length ? `<p>${esc(tp('review_list', { list: sc.reviewList.map((id) => { const [a, b] = parseFact(id); return a === 2 ? `${a} x ${b}` : `${b} x ${a}`; }).join(', ') }))}</p>` : ''}<p>${tp('week', { n: Math.round(secs / 60) })}</p>
     <h3>${tp('map')}</h3><div class="minimap">${mapGrid(pd, { readOnly: true })}</div>
     <h3>${tp('tricky')}</h3>${tricky.length ? `<ol>${tricky.map((x) => { const [a, b] = parseFact(x.id); return `<li>${a} x ${b} - ${esc(mixText(x))}</li>`; }).join('')}</ol>` : `<p>${tp('no_tricky')}</p>`}
     ${idea.map((l) => `<p class="idea">${esc(l)}</p>`).join('')}
-    <div class="toggles"><button class="btn alt tog snd">${ICON.speaker} ${tp('sound')} <b></b></button><button class="btn alt tog mus">${ICON.note} ${tp('music')} <b></b></button></div>
-    <p class="priv">${tp('privacy_1')}<br>${tp('privacy_2')}</p>
+    <div class="toggles"><button class="btn alt tog jh">${tp('jump_help')} <b></b></button><button class="btn alt tog snd">${ICON.speaker} ${tp('sound')} <b></b></button><button class="btn alt tog mus">${ICON.note} ${tp('music')} <b></b></button></div>
+    <p class="small">${tp('jump_help_note')}</p><p class="priv">${tp('privacy_1')}<br>${tp('privacy_2')}</p>
     <div class="row"><button class="btn warn resetp">${tp('reset_player')}</button><button class="btn warn reseta">${tp('reset_all')}</button></div>
     <p class="ver">${tp('version', { v: CONFIG.VERSION })}</p></div><div class="layer"></div>`);
-  const upd = () => { $('.snd b', scr).textContent = S.settings.sound ? tp('on') : tp('off'); $('.mus b', scr).textContent = S.settings.music ? tp('on') : tp('off'); };
+  $('.jh', scr).addEventListener('click', () => { tapSound(); sc.jumpHelp = !sc.jumpHelp; store.saveProgress(pd); upd(); });
+  const upd = () => { $('.jh b', scr).textContent = sc.jumpHelp ? tp('on') : tp('off'); $('.snd b', scr).textContent = S.settings.sound ? tp('on') : tp('off'); $('.mus b', scr).textContent = S.settings.music ? tp('on') : tp('off'); };
   upd();
   $('.snd', scr).addEventListener('click', () => { S.settings.sound = !S.settings.sound; A.setSound(S.settings.sound); store.saveSettings(S.settings); tapSound(); upd(); });
   $('.mus', scr).addEventListener('click', () => { S.settings.music = !S.settings.music; A.setMusic(S.settings.music); store.saveSettings(S.settings); tapSound(); upd(); });

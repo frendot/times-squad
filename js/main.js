@@ -4,13 +4,14 @@ import { S, loadStrings, today } from './ui.js';
 import * as store from './store.js';
 import * as A from './audio.js';
 import { loadArt, artFile } from './artpack.js';
+import { loadRig } from './puppet.js';
 import { start, goHome, choosePlayer } from './screens.js';
 import { pauseGame, isRunning } from './game.js';
 
 async function boot() {
   await loadStrings();
   const d0 = new Date(); const pad = (n) => String(n).padStart(2, '0');
-  await Promise.all([store.open(), loadArt()]);
+  await Promise.all([store.open(), loadArt(), loadRig()]);
   const sign = artFile && (await import('./artpack.js')).art(['sign'], ['wood', 'sign']);
   if (sign) document.documentElement.style.setProperty('--sign-img', `url("${sign.img.src}")`);
   const panel = (await import('./artpack.js')).art(['panel']);

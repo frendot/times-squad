@@ -1,8 +1,8 @@
 {
  "sprites": [
   {
-   "file": "bg_far.webp",
-   "key": "bg_far",
+   "file": "bg_spring_far.webp",
+   "key": "bg_spring_far",
    "w": 0,
    "h": 0,
    "anchor": [
@@ -12,8 +12,8 @@
    "licence": "own (AI-generated for this project)"
   },
   {
-   "file": "bg_mid_jungle.webp",
-   "key": "bg_mid_jungle",
+   "file": "bg_spring_mid.webp",
+   "key": "bg_spring_mid",
    "w": 0,
    "h": 0,
    "anchor": [
@@ -34,13 +34,24 @@
    "licence": "own (AI-generated for this project)"
   },
   {
-   "file": "fox_run.png",
-   "key": "fox_run",
-   "w": 372,
+   "file": "fox_portrait.png",
+   "key": "fox_portrait",
+   "w": 511,
    "h": 512,
    "anchor": [
     0.5,
-    1
+    0.5
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "frog_portrait.png",
+   "key": "frog_portrait",
+   "w": 336,
+   "h": 512,
+   "anchor": [
+    0.5,
+    0.5
    ],
    "licence": "own (AI-generated for this project)"
   },
@@ -56,175 +67,10 @@
    "licence": "own (AI-generated for this project)"
   },
   {
-   "file": "monster_bat.png",
-   "key": "monster_bat",
-   "w": 512,
-   "h": 296,
-   "anchor": [
-    0.5,
-    0.5
-   ],
-   "licence": "own (AI-generated for this project)"
-  },
-  {
-   "file": "monster_rock.png",
-   "key": "monster_rock",
-   "w": 512,
-   "h": 490,
-   "anchor": [
-    0.5,
-    1
-   ],
-   "licence": "own (AI-generated for this project)"
-  },
-  {
-   "file": "monster_slime.png",
-   "key": "monster_slime",
-   "w": 512,
-   "h": 394,
-   "anchor": [
-    0.5,
-    1
-   ],
-   "licence": "own (AI-generated for this project)"
-  },
-  {
-   "file": "obstacle_branch.png",
-   "key": "obstacle_branch",
-   "w": 512,
-   "h": 101,
-   "anchor": [
-    0.5,
-    0
-   ],
-   "licence": "own (AI-generated for this project)"
-  },
-  {
-   "file": "obstacle_log.png",
-   "key": "obstacle_log",
-   "w": 512,
-   "h": 140,
-   "anchor": [
-    0.5,
-    1
-   ],
-   "licence": "own (AI-generated for this project)"
-  },
-  {
-   "file": "obstacle_stone.png",
-   "key": "obstacle_stone",
-   "w": 512,
-   "h": 489,
-   "anchor": [
-    0.5,
-    1
-   ],
-   "licence": "own (AI-generated for this project)"
-  },
-  {
-   "file": "orb_purple.png",
-   "key": "orb_purple",
-   "w": 254,
-   "h": 256,
-   "anchor": [
-    0.5,
-    0.5
-   ],
-   "licence": "own (AI-generated for this project)"
-  },
-  {
-   "file": "orb_white.png",
-   "key": "orb_white",
-   "w": 254,
-   "h": 256,
-   "anchor": [
-    0.5,
-    0.5
-   ],
-   "licence": "own (AI-generated for this project)"
-  },
-  {
-   "file": "pickup_coin.png",
-   "key": "pickup_coin",
-   "w": 250,
-   "h": 256,
-   "anchor": [
-    0.5,
-    0.5
-   ],
-   "licence": "own (AI-generated for this project)"
-  },
-  {
-   "file": "power_jetpack.png",
-   "key": "power_jetpack",
-   "w": 217,
-   "h": 256,
-   "anchor": [
-    0.5,
-    0.5
-   ],
-   "licence": "own (AI-generated for this project)"
-  },
-  {
-   "file": "power_magnet.png",
-   "key": "power_magnet",
+   "file": "monster_frog.png",
+   "key": "monster_frog",
    "w": 256,
-   "h": 233,
-   "anchor": [
-    0.5,
-    0.5
-   ],
-   "licence": "own (AI-generated for this project)"
-  },
-  {
-   "file": "power_mushroom.png",
-   "key": "power_mushroom",
-   "w": 238,
-   "h": 256,
-   "anchor": [
-    0.5,
-    0.5
-   ],
-   "licence": "own (AI-generated for this project)"
-  },
-  {
-   "file": "power_shield.png",
-   "key": "power_shield",
-   "w": 245,
-   "h": 256,
-   "anchor": [
-    0.5,
-    0.5
-   ],
-   "licence": "own (AI-generated for this project)"
-  },
-  {
-   "file": "track_planks.webp",
-   "key": "track_planks",
-   "w": 0,
-   "h": 0,
-   "anchor": [
-    0,
-    0
-   ],
-   "licence": "own (AI-generated for this project)"
-  },
-  {
-   "file": "ui_sign.png",
-   "key": "ui_sign",
-   "w": 512,
-   "h": 254,
-   "anchor": [
-    0.5,
-    0.5
-   ],
-   "licence": "own (AI-generated for this project)"
-  },
-  {
-   "file": "../art-extra/fox_jump.png",
-   "key": "fox_jump",
-   "w": 389,
-   "h": 512,
+   "h": 217,
    "anchor": [
     0.5,
     1
@@ -232,21 +78,10 @@
    "licence": "own (AI-generated for this project)"
   },
   {
-   "file": "../art-extra/fox_portrait.png",
-   "key": "fox_portrait",
-   "w": 511,
-   "h": 512,
-   "anchor": [
-    0.5,
-    0.5
-   ],
-   "licence": "own (AI-generated for this project)"
-  },
-  {
-   "file": "../art-extra/fox_slide.png",
-   "key": "fox_slide",
-   "w": 495,
-   "h": 512,
+   "file": "monster_pinecone.png",
+   "key": "monster_pinecone",
+   "w": 202,
+   "h": 256,
    "anchor": [
     0.5,
     1
@@ -254,18 +89,7 @@
    "licence": "own (AI-generated for this project)"
   },
   {
-   "file": "../art-extra/frog_portrait.png",
-   "key": "frog_portrait",
-   "w": 336,
-   "h": 512,
-   "anchor": [
-    0.5,
-    0.5
-   ],
-   "licence": "own (AI-generated for this project)"
-  },
-  {
-   "file": "../art-extra/owl_portrait.png",
+   "file": "owl_portrait.png",
    "key": "owl_portrait",
    "w": 512,
    "h": 462,
@@ -276,10 +100,32 @@
    "licence": "own (AI-generated for this project)"
   },
   {
-   "file": "../art-extra/panda_portrait.png",
+   "file": "panda_portrait.png",
    "key": "panda_portrait",
    "w": 453,
    "h": 512,
+   "anchor": [
+    0.5,
+    0.5
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "ui_panel.png",
+   "key": "ui_panel",
+   "w": 512,
+   "h": 220,
+   "anchor": [
+    0.5,
+    0.5
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "ui_sign.png",
+   "key": "ui_sign",
+   "w": 512,
+   "h": 254,
    "anchor": [
     0.5,
     0.5

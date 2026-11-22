@@ -1,7 +1,168 @@
 {
  "note": "Every sound is a real recording (CC0 1.0). No synthesis. listenedBy is null until a person has listened to the file (spec 12.4).",
- "totalBytes": 341456,
+ "totalBytes": 390821,
  "sounds": [
+  {
+   "id": "leafstep",
+   "file": "leafstep.m4a",
+   "events": [
+    "land"
+   ],
+   "what": "one footstep in dry leaves (v0.3)",
+   "seconds": 0.55,
+   "bytes": 5619,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/421791/",
+     "title": "Walking through leaves",
+     "author": "markbolden",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 3.40-3.95 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "high-pass 120 Hz",
+    "level to -26 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "rustle",
+   "file": "rustle.m4a",
+   "events": [
+    "curtain",
+    "acorn_drop"
+   ],
+   "what": "dry leaves crumpled by hand (v0.3: vine door, leaf bed)",
+   "seconds": 0.85,
+   "bytes": 8405,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/235755/",
+     "title": "Crumple Dry Leaf 1",
+     "author": "elliotlp",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 0.05-0.90 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "high-pass 200 Hz",
+    "level to -26 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "sneeze",
+   "file": "sneeze.m4a",
+   "events": [
+    "attack_sneeze"
+   ],
+   "what": "a person sneezing, pitched down for the Broccoli (v0.3)",
+   "seconds": 0.81,
+   "bytes": 7828,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/54505/",
+     "title": "sneeze.wav",
+     "author": "sagetyrtle",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 1.30-2.10 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "pitch -3 st",
+    "level to -21 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "wind",
+   "file": "wind.m4a",
+   "events": [
+    "attack_spin"
+   ],
+   "what": "wind outdoors (v0.3: Broccoli spin)",
+   "seconds": 2.5,
+   "bytes": 21754,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/425044/",
+     "title": "Sound of the wind",
+     "author": "ritacataludo",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 0.50-3.00 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "low-pass 2500 Hz",
+    "level to -24 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "spring",
+   "file": "spring.m4a",
+   "events": [
+    "jump_big",
+    "mushroom"
+   ],
+   "what": "a real spring-loaded release (v0.3: Spring Boots, mushroom)",
+   "seconds": 0.55,
+   "bytes": 5759,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/418229/",
+     "title": "Spring loaded release",
+     "author": "KieranKeegan",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 0.40-0.95 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "level to -22 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
   {
    "id": "tap",
    "file": "tap.m4a",
