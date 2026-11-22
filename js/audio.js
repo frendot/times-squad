@@ -7,7 +7,8 @@ const stats = { total: 0, loaded: 0, failed: 0, played: 0 };
 self.__tsAudio = stats;
 let soundOn = true, musicOn = false, wantMusic = false, loading = null;
 const FILES = ['tap', 'pop', 'feet', 'glock', 'chimes', 'cheer', 'woo', 'boing', 'shuffle', 'clap', 'squeak', 'splat', 'splosh', 'giggle',
-  'laugh', 'munch', 'stomp', 'swish', 'fabric', 'uke', 'fanfare', 'ting', 'hmph', 'music', 'leafstep', 'rustle', 'sneeze', 'wind', 'spring'];
+  'laugh', 'munch', 'stomp', 'swish', 'fabric', 'uke', 'fanfare', 'ting', 'hmph', 'music', 'leafstep', 'rustle', 'sneeze', 'wind', 'spring',
+  'toybop', 'duck', 'moo', 'goat', 'cowbell', 'hiccup', 'rain', 'snowstep', 'bubbles', 'blow', 'hey', 'roar']; // v0.4.1 boss sounds
 // Event -> [file, playback rate, gain]. Pitch steps use the playback rate of the same real recording.
 const EVENTS = {
   ui_tap: ['tap', 1, 0.8], start_jingle: ['fanfare', 1, 0.9],
@@ -16,9 +17,31 @@ const EVENTS = {
   power: ['fanfare', 1.26, 0.8], power_end: ['glock', 0.8, 0.5], bubble_in: ['pop', 1.3, 0.6], bubble_pop: ['pop', 0.8, 0.9],
   bop: ['pop', 0.7, 1], bump: ['hmph', 1.2, 0.6], right: ['chimes', 1, 0.7], wrong: ['squeak', 1, 0.5], curtain: ['rustle', 0.9, 0.7],
   checkpoint: ['glock', 1.26, 0.6], finish: ['fanfare', 1, 0.9], medal: ['clap', 1, 0.7], cheer: ['cheer', 1, 0.7],
-  attack_warn: ['hmph', 0.85, 0.9], attack_spin: ['wind', 1, 0.9], attack_stomp: ['stomp', 1, 0.9], attack_sneeze: ['sneeze', 1, 1], boss_bop: ['splat', 1, 1], boss_win: ['splosh', 0.8, 1],
+  attack_warn: ['hmph', 0.85, 0.9], attack_spin: ['wind', 1, 0.9], attack_stomp: ['stomp', 1, 0.9], attack_sneeze: ['sneeze', 1, 1], boss_bop: ['toybop', 1, 1], boss_win: ['laugh', 1, 1], fanfare_win: ['fanfare', 1, 1],
   squeak: ['squeak', 1.3, 0.5], giggle: ['giggle', 1, 0.6], woo: ['woo', 1, 0.8],
 };
+// v0.4.1 boss moves: look -> layers of [file, rate, gain, delay s]. All real recordings (see SOUNDS.md for the stand-ins).
+const BOSS_SFX = {
+  leafspin: [['wind', 1, 0.9], ['rustle', 1, 0.6, 0.1]], babies: [['boing', 1.3, 0.7], ['boing', 1.5, 0.6, 0.25], ['boing', 1.7, 0.5, 0.5]],
+  stomp: [['stomp', 1, 1]], sneeze: [['sneeze', 1.15, 1]],
+  coconut: [['shuffle', 0.7, 0.9], ['tap', 0.6, 0.6, 0.3]], hula: [['fabric', 0.8, 0.9], ['fabric', 0.9, 0.7, 0.35], ['wind', 1.1, 0.5]], juice: [['splosh', 1, 1]],
+  moonjump: [['spring', 0.7, 0.9], ['stomp', 0.8, 0.7, 0.6]], bubbles: [['bubbles', 1, 1]], moo: [['moo', 1, 1]],
+  rain: [['rain', 1, 0.9]], puffs: [['stomp', 1.4, 0.7], ['fabric', 1, 0.6, 0.15]], thunder: [['stomp', 0.6, 1], ['hmph', 0.6, 0.5, 0.1]],
+  hiccup: [['hiccup', 1, 1]], tumble: [['rustle', 0.8, 0.9], ['rustle', 0.9, 0.7, 0.4]], sand: [['wind', 1.2, 0.8], ['rustle', 1.4, 0.4]],
+  bell: [['cowbell', 1, 1], ['goat', 1, 0.8, 0.35]], leaves: [['rustle', 1, 0.9], ['leafstep', 1, 0.6, 0.3]], hey: [['hey', 1, 1]],
+  ring: [['swish', 0.8, 1]], spinwind: [['fabric', 0.75, 0.9], ['wind', 1, 0.6]], juggle: [['stomp', 1.7, 0.7], ['stomp', 1.8, 0.7, 0.3], ['stomp', 1.6, 0.7, 0.6]],
+  snowball: [['snowstep', 0.8, 1], ['snowstep', 0.9, 0.8, 0.3]], ice: [['snowstep', 1.5, 0.8], ['swish', 0.6, 0.6, 0.1]], nose: [['blow', 1, 0.9], ['fabric', 1.3, 0.6, 0.2]],
+  belly: [['boing', 0.6, 0.9], ['stomp', 0.7, 0.9, 0.05]], storm: [['wind', 0.9, 1]], moons: [['blow', 0.9, 0.9], ['tap', 1.4, 0.5, 0.3], ['tap', 1.6, 0.5, 0.5]],
+  colorsneeze: [['sneeze', 1.2, 1], ['pop', 1, 0.8, 0.35]], tail: [['swish', 0.7, 1], ['fabric', 0.8, 0.6, 0.1]],
+  roar: [['roar', 1, 1], ['duck', 0.8, 0.5, 0.1], ['duck', 0.7, 0.4, 0.5]],
+};
+export function bossSound(look) {
+  const L = BOSS_SFX[look]; if (!L) return false;
+  let any = false; for (const [f, r, g, d] of L) any = playBuf(f, r, g, d || 0) || any; return any || !!ctx;
+}
+// The shared laugh, pitched per boss (the same recording at a different playback rate).
+export const laugh = (rate = 1) => playBuf('laugh', rate, 1);
+export const BOSS_LOOKS = Object.keys(BOSS_SFX);
 const STEP = (n) => Math.pow(2, n / 12);
 const SCALE = [0, 2, 4, 5, 7, 9, 11, 12, 14, 16, 17, 19];
 export function unlock() {

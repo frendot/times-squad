@@ -1,6 +1,6 @@
 {
  "note": "Every sound is a real recording (CC0 1.0). No synthesis. listenedBy is null until a person has listened to the file (spec 12.4).",
- "totalBytes": 390821,
+ "totalBytes": 510891,
  "sounds": [
   {
    "id": "leafstep",
@@ -939,6 +939,393 @@
     "high-pass 40 Hz",
     "high-pass 60 Hz",
     "level to -30 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "toybop",
+   "file": "toybop.m4a",
+   "events": [
+    "boss_bop"
+   ],
+   "what": "a squeezed rubber squeeze toy (the shared boss bop)",
+   "seconds": 0.25,
+   "bytes": 3196,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/240015/",
+     "title": "Squeeze Toy.mp3",
+     "author": "survivalzombie",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 0.27-0.52 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "level to -20 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "duck",
+   "file": "duck.m4a",
+   "events": [
+    "dragon_roar (layer)"
+   ],
+   "what": "a rubber duck toy squeak (stands in for a kazoo)",
+   "seconds": 0.45,
+   "bytes": 4962,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/201285/",
+     "title": "Rubber duck toy squeaking.wav",
+     "author": "panmaterac",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 1.65-2.10 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "high-pass 200 Hz",
+    "level to -22 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "moo",
+   "file": "moo.m4a",
+   "events": [
+    "atk_moo",
+    "x5 laugh layer"
+   ],
+   "what": "a real cow moo, pitched up a little, with echo (Moon Cow)",
+   "seconds": 1.57,
+   "bytes": 14145,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/233127/",
+     "title": "Cow - Moo 4 - 96kHz.wav",
+     "author": "JarredGibb",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 0.55-1.95 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "pitch +2 st",
+    "aecho=0.8:0.6:180:0.35 Hz",
+    "level to -21 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "goat",
+   "file": "goat.m4a",
+   "events": [
+    "atk_bleat"
+   ],
+   "what": "a real goat bleat, pitched down (Grandpa Goat)",
+   "seconds": 0.61,
+   "bytes": 6208,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/385913/",
+     "title": "S034_Goat_Bleeting_Mono.wav",
+     "author": "P\u00f3l",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 3.00-3.60 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "pitch -4 st",
+    "level to -21 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "cowbell",
+   "file": "cowbell.m4a",
+   "events": [
+    "atk_bell"
+   ],
+   "what": "a real cowbell hit (Grandpa Goat)",
+   "seconds": 0.6,
+   "bytes": 6171,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/90988/",
+     "title": "MEDIUM COWBELL OF GOD 020.wav",
+     "author": "Suicidity",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 0.00-0.60 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "level to -21 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "hiccup",
+   "file": "hiccup.m4a",
+   "events": [
+    "atk_hiccup"
+   ],
+   "what": "a real adult hiccup, pitched up (Hiccup Cactus)",
+   "seconds": 0.44,
+   "bytes": 4645,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/38615/",
+     "title": "hiccups.wav",
+     "author": "UncleSigmund",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 2.35-2.80 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "pitch +2 st",
+    "level to -20 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "rain",
+   "file": "rain.m4a",
+   "events": [
+    "atk_rain"
+   ],
+   "what": "rain on a car roof (Rain Cloud)",
+   "seconds": 2.5,
+   "bytes": 21645,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/420469/",
+     "title": "Rain.wav",
+     "author": "glitterglass",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 0.50-3.00 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "low-pass 6000 Hz",
+    "level to -26 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "snowstep",
+   "file": "snowstep.m4a",
+   "events": [
+    "atk_snowball",
+    "atk_ice"
+   ],
+   "what": "a footstep in snow (Snowman King)",
+   "seconds": 0.4,
+   "bytes": 4504,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/420552/",
+     "title": "Footsteps_Snow_06.wav",
+     "author": "MarcMatthewsMusic",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 0.05-0.45 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "high-pass 120 Hz",
+    "level to -23 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "bubbles",
+   "file": "bubbles.m4a",
+   "events": [
+    "atk_bubbles"
+   ],
+   "what": "bubbles blown through a straw (Moon Cow milk bubbles)",
+   "seconds": 1.5,
+   "bytes": 13458,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/420869/",
+     "title": "bubbles in glass cup 2.wav",
+     "author": "swordofkings128",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 1.70-3.20 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "level to -24 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "blow",
+   "file": "blow.m4a",
+   "events": [
+    "atk_moons",
+    "atk_nose"
+   ],
+   "what": "an adult blowing out a breath (tiny moons, nose spin)",
+   "seconds": 0.5,
+   "bytes": 5183,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/406645/",
+     "title": "Blowing Out Candle_bigger breath.wav",
+     "author": "tlcolbe",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 2.85-3.35 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "level to -22 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "hey",
+   "file": "hey.m4a",
+   "events": [
+    "atk_hey"
+   ],
+   "what": "an adult shouting \"Hey!\", pitched down, with 3 echoes added (Mountain Shout)",
+   "seconds": 2.21,
+   "bytes": 19223,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/156510/",
+     "title": "Hey.wav",
+     "author": "AndreOnate",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 0.00-1.30 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "pitch -2 st",
+    "aecho=0.8:0.7:300|600|900:0.5|0.35|0.2 Hz",
+    "level to -21 dBFS active RMS",
+    "peak limit -1.5 dBFS",
+    "mono AAC"
+   ],
+   "listenedBy": null
+  },
+  {
+   "id": "roar",
+   "file": "roar.m4a",
+   "events": [
+    "dragon_roar"
+   ],
+   "what": "an adult friendly \"roar\", pitched down and slowed (Rainbow Dragon)",
+   "seconds": 1.89,
+   "bytes": 16730,
+   "sources": [
+    {
+     "url": "https://freesound.org/s/410343/",
+     "title": "Roar.wav",
+     "author": "waxsocks",
+     "licence": "CC0-1.0",
+     "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "via": "FSD50K (Zenodo 10.5281/zenodo.4060432; per-clip licence field = CC0), copy from huggingface.co/datasets/Fhrozen/FSD50k",
+     "realRecording": true,
+     "fetchedOn": "2026-11-22"
+    }
+   ],
+   "edits": [
+    "trim 1.50-3.20 s",
+    "fade in/out",
+    "high-pass 40 Hz",
+    "pitch -2 st",
+    "speed x0.9",
+    "low-pass 4000 Hz",
+    "level to -21 dBFS active RMS",
     "peak limit -1.5 dBFS",
     "mono AAC"
    ],

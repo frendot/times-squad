@@ -8,12 +8,13 @@ import * as input from './input.js';
 import * as SIM from './sim.js';
 import { draw, effects, resetView, VW, VH, iconCanvas, foxCanvas } from './render.js';
 import { makeCtx, QUESTIONS, recordLevel, tableFor, strategyFor } from './questions.js';
-import { nextLevel, isBoss, fileOf, worldOf } from './levels.js';
+import { nextLevel, isBoss, fileOf, worldOf, WORLDS, BOSSES, BOSS_IDS } from './levels.js';
+import { bossImg } from './screens.js';
 import { parseFact } from './facts.js';
 
 const levels = {};
 export async function loadLevel(id) {
-  if (!levels[id]) { const r = await fetch(new URL(`../levels/${fileOf(id)}.json`, import.meta.url)); levels[id] = { ...(await r.json()), world: worldOf(id) }; }
+  if (!levels[id]) { const r = await fetch(new URL(`../levels/${fileOf(id)}.json`, import.meta.url)); const wd = worldOf(id), B = isBoss(id) ? BOSSES[wd] : null; levels[id] = { ...(await r.json()), world: wd, ...(B ? { attacks: B.attacks, parade: B.parade || 0 } : {}) }; }
   return levels[id];
 }
 export const fmtTime = (steps) => { const s = steps / 60; const m = Math.floor(s / 60), r = s - m * 60; return `${m}:${r.toFixed(1).padStart(4, '0')}`; };
@@ -25,7 +26,7 @@ self.__tsGame = () => (G ? { level: G.levelId, mode: G.w.mode, timer: G.w.timer,
 
 const SOUNDS = { jump: 'jump', jump_big: 'jump_big', land: 'land', mushroom: 'mushroom', pit: 'pit', pit_back: 'pit_back', sign: 'sign', acorn: 'acorn', flower: 'flower',
   power: 'power', power_end: 'power_end', bop: 'bop', bump: 'bump', bubble_pop: 'bubble_pop', right: 'right', wrong: 'wrong', checkpoint: 'checkpoint', finish: 'finish',
-  attack_warn: 'attack_warn', boss_bop: 'boss_bop', boss_win: 'boss_win', bubble: 'bubble_in' };
+  attack_warn: 'attack_warn', boss_bop: 'boss_bop', bubble: 'bubble_in' };
 
 export async function playLevel(levelId, { exit, again }) {
   const lvl = await loadLevel(levelId);
@@ -43,6 +44,7 @@ export async function playLevel(levelId, { exit, again }) {
       fox: { ...w.fox, x, safe: { x, y: 0 } } };
   };
   const w = SIM.newWorld(lvl, opts);
+  if (lvl.parade) w.paradeWorlds = BOSS_IDS.filter((b) => b !== levelId && sc.unlocked.includes(nextLevel(b))).map(worldOf); // bosses already beaten
   const ghostData = rec.medal >= 1 && rec.ghostOn !== false && pd.ghosts[levelId] && pd.ghosts[levelId].samples ? pd.ghosts[levelId] : null;
   A.stopMusic();
   const scr = show('play', `<div class="stage"><canvas class="cv"></canvas>
@@ -110,9 +112,11 @@ function onEvents(evs) {
     if (e.type === 'bubble_pop') toast(t('pop'));
     if (e.type === 'bop') toast(t('poof'));
     if (e.type === 'checkpoint') { toast(t('checkpoint')); saveCheckpoint(); }
-    if (e.type === 'attack_warn') toast(t('boss_' + e.kind));
-    if (e.type === 'attack') A.play('attack_' + e.kind);
-    if (e.type === 'sign' && e.boss && e.i === 0) toast(t('boss_here'));
+    if (e.type === 'attack_warn') toast(t('atk_' + e.look));
+    if (e.type === 'attack') { if (!A.bossSound(e.look)) A.play('attack_' + e.kind); }
+    if (e.type === 'sign' && e.boss && e.i === 0) { toast(t('boss_here_' + w.lvl.world)); if (w.lvl.world === 'rb') A.bossSound('roar'); }
+    if (e.type === 'sign' && e.boss && w.lvl.parade && e.i === w.lvl.parade && (w.paradeWorlds || []).length) { toast(t('parade')); A.play('cheer'); }
+    if (e.type === 'boss_win') { A.laugh(WORLDS[w.lvl.world].voice); if (w.lvl.world === 'x5') A.bossSound('moo'); toast(t('end_' + w.lvl.world)); }
     if (e.type === 'finish') { G.over = true; setTimeout(() => finish(), 1400); }
     if (e.type === 'boss_done') { G.over = true; setTimeout(() => bossWin(), 300); }
   }
@@ -249,10 +253,27 @@ async function bossWin() {
   pd.run = null; store.saveRun(pd); store.saveProgress(pd);
   await store.saveLevel(pd, Gs.levelId);
   G = null;
+  const wd = worldOf(Gs.levelId);
+  if (wd === 'rb') return finale(Gs);
   A.play('cheer');
-  const scr = show('bosswin', `<div class="bw"><h1>${t('boss_win')}</h1><div class="bwfox"></div><p>${t('boss_win_2')}</p><button class="btn go tomap">${t('to_map')}</button></div>`);
+  const scr = show('bosswin', `<div class="bw"><h1>${t('boss_win')}</h1><div class="bwrow"><div class="bwfox"></div><div class="bwboss">${bossImg(wd, 'friendly', 'bwimg')}</div></div><p class="bwline">${t('end_' + wd)}</p><p>${t('boss_win_2')}</p><button class="btn go tomap">${t('to_map')}</button></div>`);
   $('.bwfox', scr).appendChild(foxCanvas('dance1', 200, 'joy'));
-  $('.tomap', scr).addEventListener('click', () => { A.play('ui_tap'); Gs.exit(); });
+  $('.tomap', scr).addEventListener('click', () => { removeEventListener('keydown', key); A.play('ui_tap'); Gs.exit(); });
+  // hotfix: keyboard players can leave the win screen with Enter or Space (it had no key before)
+  const key = (e) => { if (S.screen !== 'bosswin') return removeEventListener('keydown', key); if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); $('.tomap', scr).click(); } };
+  setTimeout(() => addEventListener('keydown', key), 600);
+}
+// v0.4.1 finale after the Rainbow Dragon: "You did it!" with the friend parade (all 10 bosses, friendly). Tap or any key skips it.
+function finale(Gs) {
+  A.play('fanfare_win'); setTimeout(() => A.play('cheer'), 900);
+  const friends = ['rb', 'x2', 'x10', 'x5', 'x3', 'x4', 'x9', 'x6', 'x8', 'x7'].map((wd, i) => `<span class="pf pf${i}">${bossImg(wd, 'friendly', 'pfimg')}</span>`).join('');
+  const scr = show('finale', `<div class="fin" role="dialog" aria-label="${t('fin_title')}"><div class="confetti"></div><h1>${t('fin_title')}</h1><p class="finline">${t('end_rb')}</p>
+    <div class="parade">${friends}</div><div class="finfox"></div><p class="finskip">${t('fin_skip')}</p></div>`);
+  $('.finfox', scr).appendChild(foxCanvas('dance1', innerHeight < 520 ? 96 : 170, 'joy'));
+  let done = false; const go = () => { if (done) return; done = true; clearTimeout(tm); removeEventListener('keydown', key); A.play('ui_tap'); Gs.exit(); };
+  const key = (e) => { e.preventDefault(); go(); };
+  setTimeout(() => { if (!done) { scr.addEventListener('click', go); addEventListener('keydown', key); } }, 400); // a short guard so the last jump press does not skip it
+  const tm = setTimeout(go, 12000);
 }
 export function levelTitle(id) { return t('lv_' + id); }
 export { fmtTarget };

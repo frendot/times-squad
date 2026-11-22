@@ -1,11 +1,11 @@
 // On-device storage (spec 11): IndexedDB "times-squad". Nothing leaves the device. Each player (animal icon) has its own
 // progress, facts, run, history and play time, keyed by the player id. If IndexedDB is not available the game runs from memory.
 import { CONFIG } from './config.js';
-import { newPlayerData, migrate, migrateLevels, repairUnlocks } from './player.js';
+import { newPlayerData, migrate, migrateLevels, repairUnlocks, CHAIN } from './player.js';
 export { migrate };
 
 const DB = 'times-squad', VER = 2; // v0.3: IDB version 2 adds 'levels' and 'ghosts' (spec 12.2); nothing is removed
-let db = null, mem = null;
+let db = null, mem = {};
 const STORES = ['settings', 'progress', 'facts', 'attempts', 'run', 'history', 'playtime', 'levels', 'ghosts'];
 export const defaultSettings = (today) => ({ schemaVersion: 3, sound: true, music: false, installTipDismissed: false, installTipLastShownOn: null,
   createdOn: today, lastSeenDay: today, lastPlayer: null });
@@ -21,11 +21,39 @@ export async function open() {
       for (const s of ['attempts', 'history']) if (!d.objectStoreNames.contains(s)) d.createObjectStore(s, { autoIncrement: true }).createIndex('pid', 'pid');
     };
     db = await req(r);
-    db.onversionchange = () => { db.close(); db = null; };
+    db.onversionchange = () => { try { db.close(); } catch { /* closed */ } db = null; }; // reopened on the next write
+    db.onclose = () => { db = null; }; // e.g. iOS drops the connection after the app was in the background: reopen on the next write
     if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
   } catch (e) { db = null; mem = mem || {}; }
   return !!db;
 }
+// v0.4 hotfix: writes never fail silently for good. If a write fails (lost connection), reopen the database and try once more.
+let opening = null;
+async function ensure() { if (db) return true; if (!('indexedDB' in self)) return false; opening = opening || open().finally(() => { opening = null; }); return opening; }
+async function write(fn) {
+  for (let k = 0; k < 2; k++) {
+    try { if (!(await ensure())) return false; await fn(); return true; } catch (e) { try { db && db.close(); } catch { /* closed */ } db = null; }
+  }
+  return false;
+}
+// Progress is written as a merge: unlocks are never taken away by an older copy (for example a second tab that was open).
+export function mergeProgress(stored, mine) {
+  if (!stored || !stored.scroller) return mine;
+  const a = stored.scroller.unlocked || [], b = mine.scroller.unlocked || [];
+  const all = [...new Set([...b, ...a])];
+  const out = { ...mine, scroller: { ...mine.scroller, unlocked: [...CHAIN.filter((id) => all.includes(id)), ...all.filter((id) => !CHAIN.includes(id))],
+    acornsTotal: Math.max(mine.scroller.acornsTotal || 0, stored.scroller.acornsTotal || 0) }, howToSeen: !!(mine.howToSeen || stored.howToSeen) };
+  return out;
+}
+function putProgress(t, pd) {
+  const st = t.objectStore('progress'), r = st.get(pd.pid);
+  r.onsuccess = () => { const m = mergeProgress(r.result, pd.progress); pd.progress.scroller.unlocked = m.scroller.unlocked; pd.progress.scroller.acornsTotal = m.scroller.acornsTotal; st.put(pd.progress, pd.pid); };
+  mirror(pd);
+}
+// A small second copy of the unlocks in localStorage, so a lost database write can never lock a child out.
+const MIRROR = (pid) => 'times-squad-unlocked:' + pid;
+function mirror(pd) { try { localStorage.setItem(MIRROR(pd.pid), JSON.stringify(pd.progress.scroller.unlocked || [])); } catch { /* storage off */ } }
+export function readMirror(pid) { try { const v = JSON.parse(localStorage.getItem(MIRROR(pid)) || '[]'); return Array.isArray(v) ? v.filter((x) => typeof x === 'string') : []; } catch { return []; } }
 function tx(stores, mode = 'readonly') { return db.transaction(stores, mode); }
 const done = (t) => new Promise((ok, bad) => { t.oncomplete = () => ok(); t.onerror = () => bad(t.error); t.onabort = () => bad(t.error); });
 
@@ -41,6 +69,7 @@ export async function saveSettings(s) {
 const byPid = async (store, pid) => req(tx([store]).objectStore(store).index('pid').getAll(IDBKeyRange.only(pid)));
 export async function loadPlayer(pid) {
   const pd = newPlayerData(pid);
+  if (!db) await ensure();
   if (!db) return mem['p:' + pid] || (mem['p:' + pid] = pd);
   try {
     const t = tx(['progress', 'facts', 'run', 'playtime', 'levels', 'ghosts']);
@@ -67,12 +96,15 @@ export async function loadPlayer(pid) {
       for (const [s, id, v] of mv.put) w2.objectStore(s).put(v, pid + ':' + id);
       await done(w2);
     }
-    const fixed = repairUnlocks(pd.progress.scroller, pd.levels);
+    const mir = readMirror(pid).filter((id) => CHAIN.includes(id) && !pd.progress.scroller.unlocked.includes(id));
+    if (mir.length) { const all = new Set([...pd.progress.scroller.unlocked, ...mir]); pd.progress.scroller.unlocked = CHAIN.filter((id) => all.has(id)); }
+    const fixed = repairUnlocks(pd.progress.scroller, pd.levels) || mir.length > 0;
     const v3run = run && run.kind === 'level' && !run.v4; // a v0.3 checkpoint belongs to an old course
     const oldRun = (run && !run.kind) || v3run;
     if (prog && (changed || oldRun || fixed)) {
       const w = tx(['progress', 'run'], 'readwrite'); w.objectStore('progress').put(pd.progress, pid); if (oldRun) w.objectStore('run').delete(pid); await done(w);
     }
+    if (prog || mir.length) mirror(pd);
     for (const f of facts || []) { const { pid: _p, ...rest } = f; pd.facts[f.factId] = rest; }
     pd.run = run && run.kind && !v3run ? run : null;
     pd.playtime = Object.fromEntries((play || []).map((p) => [p.day, p.activeSeconds]));
@@ -84,16 +116,17 @@ export async function loadPlayer(pid) {
 }
 // One transaction after every gate: facts, attempts, run and progress (spec 11 rules).
 export async function saveGate(pd, { factIds = [], attempts = [], history = null, keepRun = false } = {}) {
-  if (!db) return;
-  try {
+  if (!db && !('indexedDB' in self)) return;
+  mirror(pd);
+  await write(async () => {
     const t = tx(['progress', 'facts', 'attempts', 'run', 'history'], 'readwrite');
-    t.objectStore('progress').put(pd.progress, pd.pid);
+    putProgress(t, pd);
     for (const id of factIds) if (pd.facts[id]) t.objectStore('facts').put({ ...pd.facts[id], pid: pd.pid }, pd.pid + ':' + id);
     for (const a of attempts) t.objectStore('attempts').add({ ...a, pid: pd.pid });
     if (history) t.objectStore('history').add({ ...history, pid: pd.pid });
     if (!keepRun) { if (pd.run) t.objectStore('run').put(pd.run, pd.pid); else t.objectStore('run').delete(pd.pid); }
     await done(t);
-  } catch { /* the game keeps running from memory; the next gate writes again */ }
+  }); // the game keeps running from memory; the next gate writes again
 }
 export async function saveAll(pd) { await saveGate(pd, { factIds: Object.keys(pd.facts) }); }
 export async function addPlaytime(pid, day, secs) {
@@ -117,6 +150,7 @@ export async function playerSummaries() {
   return out;
 }
 export async function resetPlayer(pid) {
+  try { localStorage.removeItem(MIRROR(pid)); } catch { /* storage off */ }
   if (!db) { delete mem['p:' + pid]; return; }
   try {
     const t = tx(STORES.filter((s) => s !== 'settings'), 'readwrite');
@@ -132,6 +166,7 @@ export async function resetPlayer(pid) {
 }
 // Reset everything: delete and recreate the database (spec 11).
 export async function resetAll() {
+  try { for (const p of CONFIG.PLAYERS) localStorage.removeItem(MIRROR(p)); } catch { /* storage off */ }
   if (!db) { mem = {}; return; }
   db.close(); db = null;
   try { await req(indexedDB.deleteDatabase(DB)); } catch { /* ignore */ }
@@ -149,20 +184,19 @@ export async function pruneAttempts(pid) {
 
 // v0.3: one level result (best time, medal, Brain Star, ghost) and the checkpoint run record.
 export async function saveLevel(pd, levelId, { ghost = null } = {}) {
-  if (!db) return;
-  try {
+  mirror(pd);
+  await write(async () => {
     const t = tx(['progress', 'levels', 'ghosts'], 'readwrite');
-    t.objectStore('progress').put(pd.progress, pd.pid);
+    putProgress(t, pd);
     if (pd.levels[levelId]) t.objectStore('levels').put(pd.levels[levelId], pd.pid + ':' + levelId);
     if (ghost) t.objectStore('ghosts').put(ghost, pd.pid + ':' + levelId);
     await done(t);
-  } catch { /* keep going from memory */ }
+  });
 }
 export async function saveRun(pd) {
-  if (!db) return;
-  try { const t = tx(['run'], 'readwrite'); if (pd.run) t.objectStore('run').put(pd.run, pd.pid); else t.objectStore('run').delete(pd.pid); await done(t); } catch { /* ignore */ }
+  await write(async () => { const t = tx(['run'], 'readwrite'); if (pd.run) t.objectStore('run').put(pd.run, pd.pid); else t.objectStore('run').delete(pd.pid); await done(t); });
 }
 export async function saveProgress(pd) {
-  if (!db) return;
-  try { const t = tx(['progress'], 'readwrite'); t.objectStore('progress').put(pd.progress, pd.pid); await done(t); } catch { /* ignore */ }
+  mirror(pd);
+  await write(async () => { const t = tx(['progress'], 'readwrite'); putProgress(t, pd); await done(t); });
 }

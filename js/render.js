@@ -3,13 +3,13 @@ import { CONFIG as C } from './config.js';
 import { art } from './artpack.js';
 import { drawFox, runPose, poseOf, blend, rigReady } from './puppet.js';
 import { onewaysAt, bossPlats } from './sim.js';
-import { WORLDS } from './levels.js';
+import { WORLDS, BOSSES } from './levels.js';
 
 export const VW = 960, VH = 540, T = 48;
 const GY = VH - 96; // screen y of the ground top when the camera is low
 let P = WORLDS.x2; // the current world's ground and platform colours
-const R = { cam: { x: 0, y: 0 }, phase: 0, idleT: 0, parts: [], blinkT: 3, t: 0, poseK: 0, last: null, fx: [] };
-export function resetView(w) { R.cam.x = Math.max(0, w.fox.x - 7); R.cam.y = 0; R.parts = []; R.fx = []; R.phase = 0; }
+const R = { bossHit: 0, paradeT: 0, cam: { x: 0, y: 0 }, phase: 0, idleT: 0, parts: [], blinkT: 3, t: 0, poseK: 0, last: null, fx: [] };
+export function resetView(w) { R.paradeOn = false; R.paradeDone = false; R.paradeT = 0; R.bossHit = 0; R.cam.x = Math.max(0, w.fox.x - 7); R.cam.y = 0; R.parts = []; R.fx = []; R.phase = 0; }
 const sx = (x) => (x - R.cam.x) * T, sy = (y) => GY - (y - R.cam.y) * T;
 const reduced = () => !!(self.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 
@@ -128,21 +128,82 @@ function monster(g, m) {
     if (!img(g, a, X, Y, h, { flip: false, sys: air ? 1.1 : 0.92 + Math.sin(R.t * 6) * 0.03, sxs: air ? 0.9 : 1.06, rot: bopped ? m.t * 10 * m.dir : 0, alpha: bopped ? Math.max(0, 1 - m.t / 1.5) : 1 })) { g.beginPath(); g.ellipse(X, Y - 22, 28, 22, 0, 0, 7); outlineFill(g, '#5cbf4a'); }
   }
 }
+// v0.4.1: each world has its own boss with 4 poses (idle, move = attack, bopped, friendly); the sum is drawn as text on its belly.
+let BOSSART = null;
+function bossSprite(wd, pose) { return art(['boss', wd, pose]) || art(['boss', wd, 'idle']) || art(['boss', 'x2', 'idle']); }
+const BELLY = { // hand-set belly spots (art-src/bosses-v4.1/bosses.json): centre and size as fractions of the idle sprite
+  x2: [0.5, 0.80, 0.34, 0.13], x10: [0.5, 0.81, 0.40, 0.13], x5: [0.5, 0.70, 0.40, 0.20], x3: [0.5, 0.66, 0.46, 0.18], x4: [0.5, 0.71, 0.42, 0.18],
+  x9: [0.48, 0.70, 0.30, 0.13], x6: [0.5, 0.64, 0.42, 0.16], x8: [0.5, 0.80, 0.42, 0.18], x7: [0.5, 0.74, 0.42, 0.18], rb: [0.37, 0.71, 0.28, 0.18] };
+export const bossBelly = (wd) => BELLY[wd] || BELLY.x2;
 function boss(g, w) {
-  const B = w.boss, L = w.lvl, a = art(['boss', 'broccoli']);
-  let h = L.bossHead * T * B.scale, rot = 0, sxs = 1, sys = 1, alpha = 1, dx = 0;
-  const A = B.attack;
+  const B = w.boss, L = w.lvl, wd = L.world || 'x2', BT = BOSSES[wd] || BOSSES.x2;
+  let h = L.bossHead * T * B.scale, rot = 0, sxs = 1, sys = 1, alpha = 1, dx = 0, dy = 0, pose = 'idle';
+  const A = B.attack, look = A ? A.look || A.kind : '';
   if (A) {
-    const k = A.t;
-    if (k < C.ATTACK_WARN_S) { dx = Math.sin(k * 40) * 4; } // the warning wiggle
-    else if (A.kind === 'spin') rot = Math.sin((k - C.ATTACK_WARN_S) * 9) * 0.25;
-    else if (A.kind === 'stomp') { sys = 0.85 + Math.abs(Math.sin((k - C.ATTACK_WARN_S) * 10)) * 0.15; sxs = 1.08; }
-    else if (A.kind === 'sneeze') { sxs = 1 + Math.sin(k * 20) * 0.04; }
+    const k = A.t, live = k >= C.ATTACK_WARN_S, kk = k - C.ATTACK_WARN_S;
+    if (!live) dx = Math.sin(k * 40) * 4; // the warning wiggle
+    else {
+      pose = 'move';
+      if (A.kind === 'spin') rot = Math.sin(kk * 9) * 0.12;
+      else if (A.kind === 'stomp') { sys = 0.9 + Math.abs(Math.sin(kk * 10)) * 0.1; sxs = 1.05; if (/moonjump|hiccup|belly|puffs/.test(look)) dy = Math.abs(Math.sin(kk * (look === 'moonjump' ? 3 : 7))) * T * (look === 'moonjump' ? 2.2 : 1.2); }
+      else if (A.kind === 'sneeze') sxs = 1 + Math.sin(k * 20) * 0.04;
+    }
   }
-  if (B.phase === 'win') { const k = Math.min(1, (B.winT || 0) / 1.2); alpha = 1 - k; sys = 1 - k * 0.6; }
-  if (!img(g, a, sx(L.bossX) + dx, sy(0), h, { rot, sxs, sys, alpha })) { g.beginPath(); g.arc(sx(L.bossX), sy(h / T / 2), h / 2, 0, 7); outlineFill(g, '#3e9b3a'); }
+  if (R.bossHit > 0 && B.phase !== 'win') { pose = 'bopped'; sys = 1; rot = 0; dy = 0; }
+  if (B.phase === 'win') { pose = 'friendly'; const k = B.winT || 0; dy = Math.abs(Math.sin(k * 6)) * T * 0.4 * Math.max(0, 1 - k / 2.5); }
+  const a = bossSprite(wd, pose), hh = pose === 'bopped' ? h * 0.72 : h, Y = sy(0) - dy;
+  let X = sx(L.bossX) + dx; if (a) X = Math.min(X, VW - 6 - (a.w / a.h) * hh * sxs * (1 - a.ax)); // keep wide bosses inside the view
+  if (!img(g, a, X, Y, hh, { rot, sxs, sys, alpha })) { g.beginPath(); g.arc(X, sy(h / T / 2), h / 2, 0, 7); outlineFill(g, BT.tint); }
+  // the sum on the belly (idle and move poses only), always as text on a soft light patch so it is easy to read
+  if (B.q && B.phase === 'ask' && a && pose !== 'bopped') {
+    const [bx, by, bw, bh] = bossBelly(wd), wpx = (a.w / a.h) * hh;
+    const cx = X + (bx - a.ax) * wpx * sxs, cy = Y + (by - a.ay) * hh * sys, ew = Math.max(96, bw * wpx), eh = Math.max(40, bh * hh);
+    g.save(); g.fillStyle = 'rgba(255,253,244,0.88)'; g.strokeStyle = 'rgba(58,33,22,0.35)'; g.lineWidth = 2;
+    g.beginPath(); g.ellipse(cx, cy, ew / 2, eh / 2, 0, 0, 7); g.fill(); g.stroke();
+    const txt = `${B.q.a} x ${B.q.b}`; let fs = Math.round(Math.min(eh * 0.62, 36)); g.font = `800 ${fs}px system-ui, sans-serif`;
+    while (g.measureText(txt).width > ew * 0.86 && fs > 16) { fs -= 2; g.font = `800 ${fs}px system-ui, sans-serif`; }
+    g.fillStyle = '#2b2238'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, cx, cy + 1); g.restore();
+  }
   if (B.phase === 'win' && (B.winT || 0) < 1.6) { const p = art(['fx', 'poof']); img(g, p, sx(L.bossX), sy(2.5), 4 * T * Math.min(1, (B.winT || 0) * 2), { alpha: 1 - (B.winT || 0) / 1.6 }); }
-  if (A && A.live && A.kind === 'spin') { g.strokeStyle = 'rgba(255,255,255,0.7)'; g.lineWidth = 4; for (let i = 0; i < 5; i++) { const y = sy(1 + i * 1.1), off = ((R.t * 600 + i * 140) % (VW + 200)); g.beginPath(); g.moveTo(VW - off, y); g.lineTo(VW - off - 60, y); g.stroke(); } }
+  if (A && A.live) { g.save(); try { bossFx(g, w, A, BT.tint); } catch { /* an effect must never stop the game */ } g.restore(); }
+}
+// Move effects per look. Pictures only: what pushes Fox is the tested mechanic (spin / stomp / sneeze) in sim.js.
+const ROLLERS = { coconut: ['#8a5a2b', 0.45], tumble: ['#b88a4a', 0.55], snowball: ['#ffffff', 0.6], babies: ['#58b947', 0.4], juggle: ['#e8e4f0', 0.3], moons: ['#d8cfc0', 0.3] };
+const RINGS = { moo: '#ffffff', bell: '#ffd23f', tail: 'rainbow', ring: '#f2c46a', thunder: '#b9c6e0', stomp: '#d9c6a3', hey: '#ffffff', moonjump: '#e2e4ea', belly: '#f0d2a0', hiccup: '#ff8fc8', puffs: '#ffffff' };
+const FALLERS = { rain: '#5b8fd9', leaves: '#e88a2f', sand: '#e0a25a', bubbles: 'bubble', colorsneeze: 'confetti', juice: '#ffc93c' };
+function bossFx(g, w, A, tint) {
+  if (reduced()) return;
+  const k = A.t - C.ATTACK_WARN_S, look = A.look || A.kind, bx = w.lvl.bossX, top = 120; // keep effects off the top band (sum and HUD)
+  if (A.kind === 'spin' || /hula|spinwind|storm|nose|ice|sand|leafspin/.test(look)) {
+    g.strokeStyle = 'rgba(255,255,255,0.7)'; g.lineWidth = 4;
+    for (let i = 0; i < 5; i++) { const y = sy(1 + i * 1.1), off = ((R.t * 600 + i * 140) % (VW + 200)); g.beginPath(); g.moveTo(VW - off, y); g.lineTo(VW - off - 60, y); g.stroke(); }
+  }
+  if (ROLLERS[look]) { const [c, r] = ROLLERS[look]; const n = look === 'babies' || look === 'juggle' || look === 'moons' ? 3 : 2;
+    for (let i = 0; i < n; i++) { const x = bx - 1.5 - (k * 6 + i * 2.2), y = r + (/babies|juggle|moons/.test(look) ? Math.abs(Math.sin(k * 6 + i)) * 1.6 : 0); if (x < -1) continue;
+      g.save(); g.translate(sx(x), sy(y)); g.rotate(-k * 8); g.beginPath(); g.arc(0, 0, r * T, 0, 7); outlineFill(g, c); g.beginPath(); g.moveTo(-r * T * 0.6, 0); g.lineTo(r * T * 0.6, 0); g.strokeStyle = 'rgba(0,0,0,0.25)'; g.lineWidth = 3; g.stroke(); g.restore(); } }
+  if (RINGS[look]) { const c = RINGS[look]; for (let i = 0; i < (look === 'hey' ? 3 : 1); i++) { const kk = k - i * 0.35; if (kk < 0) continue; const rr = 30 + kk * 260; g.lineWidth = 8; g.globalAlpha = Math.max(0, 1 - kk / 1.6);
+      if (c === 'rainbow') ['#ff6b6b', '#ffd23f', '#6bd66b', '#6bb8ff', '#b28bff'].forEach((cc, j) => { g.strokeStyle = cc; g.beginPath(); g.ellipse(sx(bx), sy(0.3), Math.max(1, rr - j * 8), Math.max(1, rr - j * 8) * 0.35, 0, Math.PI, 2 * Math.PI); g.stroke(); });
+      else { g.strokeStyle = c; g.beginPath(); g.ellipse(sx(bx), sy(0.3), rr, rr * 0.35, 0, Math.PI, 2 * Math.PI); g.stroke(); } g.globalAlpha = 1; } }
+  if (FALLERS[look]) { const c = FALLERS[look];
+    for (let i = 0; i < 18; i++) { const x = bx - 2 - ((i * 37) % 13) - k * (look === 'colorsneeze' || look === 'bubbles' ? 4 : 1), yy = 8.5 - ((k * (c === 'bubble' ? 1.2 : 4) + i * 0.47) % 8.5); const X = sx(x), Y = sy(yy); if (Y < top) continue;
+      if (c === 'bubble') { g.strokeStyle = 'rgba(255,255,255,0.85)'; g.lineWidth = 3; g.beginPath(); g.arc(X, Y, 10 + (i % 3) * 5, 0, 7); g.stroke(); }
+      else if (c === 'confetti') { g.fillStyle = ['#ff6b6b', '#ffd23f', '#6bd66b', '#6bb8ff', '#b28bff'][i % 5]; g.fillRect(X, Y, 9, 6); }
+      else if (look === 'rain') { g.fillStyle = c; g.beginPath(); g.ellipse(X, Y, 4, 9, 0, 0, 7); g.fill(); }
+      else { g.fillStyle = c; g.beginPath(); g.ellipse(X, Y, 7, 4, i, 0, 7); g.fill(); } } }
+}
+// The friend parade (Rainbow Dragon fight, one round): the bosses already beaten walk past far behind and wave.
+function parade(g, w) {
+  const B = w.boss, L = w.lvl, list = w.paradeWorlds || [];
+  if (!L.parade || !list.length) return;
+  if (!R.paradeOn && !R.paradeDone && B.bops === L.parade && B.phase === 'ask') { R.paradeOn = true; R.paradeT = 0; }
+  if (!R.paradeOn) return;
+  R.paradeT += R.dt || 1 / 60;
+  const h = 2.4 * T, gap = 2.3 * T, v = 260, dur = (VW + list.length * gap + 3 * T) / v;
+  if (R.paradeT > dur) { R.paradeOn = false; R.paradeDone = true; return; }
+  g.save(); g.globalAlpha = 0.9;
+  list.forEach((wd, i) => { const a = bossSprite(wd, 'friendly'); const x = 40 + R.paradeT * v - i * gap; if (x < -3 * T || x > VW + 3 * T) return;
+    img(g, a, x, sy(0.9) - h * 0.15 - Math.abs(Math.sin(R.paradeT * 7 + i)) * 10, h, { rot: Math.sin(R.paradeT * 5 + i) * 0.08 }); });
+  g.restore();
 }
 // ---- Fox ----
 function foxPose(w, dt) {
@@ -185,6 +246,7 @@ function ghost(g, gs) {
 }
 // ---- effects from sim events ----
 export function effects(w, evs) {
+  for (const e of evs) if (e.type === 'boss_bop') R.bossHit = 0.9;
   if (reduced()) return;
   for (const e of evs) {
     if (e.type === 'acorn' || e.type === 'flower') for (let i = 0; i < 6; i++) R.parts.push({ x: e.x, y: e.y, vx: Math.cos(i) * 2, vy: 2 + Math.sin(i) * 2, t: 0.5, c: '#ffd23f' });
@@ -209,7 +271,7 @@ function fence(g, x) {
 }
 // ---- one frame ----
 export function draw(g, w, dt, { ghostAt = null } = {}) {
-  R.t += dt; P = WORLDS[w.lvl.world] || WORLDS.x2;
+  R.t += dt; R.dt = dt; R.bossHit = Math.max(0, R.bossHit - dt); P = WORLDS[w.lvl.world] || WORLDS.x2;
   const f = w.fox, L = w.lvl;
   // camera: Fox at 35% from the left, smooth; up when Fox is high (Spring Boots)
   const len = L.length || 20;
@@ -221,6 +283,7 @@ export function draw(g, w, dt, { ghostAt = null } = {}) {
   const k = Math.min(1, dt * 6);
   R.cam.x += (tx - R.cam.x) * (Math.abs(tx - R.cam.x) > 8 ? 1 : k); R.cam.y += (ty - R.cam.y) * k;
   background(g, w);
+  if (w.boss) { try { parade(g, w); } catch { /* never stop the game for a background picture */ } }
   // pits (soft leaf floors) between ground pieces
   const gr = L.ground.slice().sort((p, q) => p[0] - q[0]);
   for (let i = 1; i < gr.length; i++) if (gr[i][0] > gr[i - 1][1]) leafBed(g, gr[i - 1][1], gr[i][0]);

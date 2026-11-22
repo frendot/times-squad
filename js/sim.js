@@ -239,7 +239,7 @@ function bossStep(w, ctx) {
   if (B.phase === 'attack') {
     const A = B.attack; A.t += DT;
     if (!A.live && A.t >= C.ATTACK_WARN_S) {
-      A.live = true; emit(w, 'attack', { kind: A.kind });
+      A.live = true; emit(w, 'attack', { kind: A.kind, look: A.look });
       if (A.kind === 'stomp' && f.ground) { f.vy = 6; f.ground = false; f.wobble = 0.4; }
       if (A.kind === 'sneeze') { f.launch = { t: 0, dur: 1, x0: f.x, y0: f.y, x1: (w.lvl.ledges[0][0] + w.lvl.ledges[0][1]) / 2, y1: w.lvl.ledges[0][2], h: 2 }; }
     }
@@ -259,7 +259,7 @@ function bossRight(w, p) {
     const BB = ww.boss; BB.bops++; BB.scale *= 1 - C.BOSS_SHRINK; emit(ww, 'boss_bop', { bops: BB.bops });
     ww.fox.launch = { t: 0, dur: 0.7, x0: ww.fox.x, y0: ww.fox.y, x1: 7, y1: 0, h: 1.5 };
     if (BB.bops >= C.BOSS_BOPS) { BB.phase = 'win'; BB.winT = 0; emit(ww, 'boss_win'); }
-    else if (BB.bops <= C.ATTACKS.length) { BB.phase = 'attack'; BB.attack = { kind: C.ATTACKS[BB.bops - 1], t: 0, live: false }; emit(ww, 'attack_warn', { kind: BB.attack.kind }); }
+    else { const AT = ww.lvl.attacks || C.ATTACKS.map((k) => [k, k]); if (BB.bops <= AT.length) { const [kind, look] = AT[BB.bops - 1]; BB.phase = 'attack'; BB.attack = { kind, look, t: 0, live: false }; emit(ww, 'attack_warn', { kind, look }); } }
   } };
 }
 // The steady state used by digest tests.

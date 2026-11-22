@@ -1,7 +1,7 @@
 import { EXPERT_S } from './experts.js';
 // All tunable numbers for Times Squad v0.4 (the side-scroller). 1 T = 1 tile. Change these after playtests.
 export const CONFIG = {
-  VERSION: '0.4.0',
+  VERSION: '0.4.1',
   PLAYERS: ['fox', 'panda', 'frog', 'owl'],
   // ---- view and physics (spec 4.1) ----
   STEP_S: 1 / 60, VIEW_W: 20, VIEW_H: 11.25, TILE_PX: 48,

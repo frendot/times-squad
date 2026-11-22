@@ -15,7 +15,7 @@ import { iconCanvas, foxCanvas } from './render.js';
 import { targets } from './config.js';
 
 const tapSound = () => A.play('ui_tap');
-const bossImg = () => { const a = art(['boss', 'broccoli']); return a ? `<img class="bimg" src="${a.img.src}" alt="">` : broccoli('grumpy'); };
+export const bossImg = (wd = 'x2', pose = 'idle', cls = 'bimg') => { const a = art(['boss', wd, pose]); return a ? `<img class="${cls}" src="${a.img.src}" alt="">` : broccoli(pose === 'friendly' ? 'laugh' : 'grumpy'); };
 const safe = (p) => p.catch((e) => { if (!(e instanceof Stop)) throw e; });
 let installPrompt = null;
 self.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installPrompt = e; });
@@ -72,7 +72,7 @@ export async function choosePlayer(pid) {
 }
 // ---- S3 How to play (3 cards) ----
 export async function howTo(back) {
-  const key = (k) => `<span class="key">${k}</span>`;
+  const key = (k) => `<span class="key${k.length > 2 && !k.startsWith('&') ? ' wide' : ''}">${k}</span>`;
   const cards = [
     () => `<h2>${t('how_title')}</h2><div class="howfox"></div><div class="ctl"><div class="ctlrow">${key('&larr;')}${key('&rarr;')}<span>${t('how_move')}</span></div>
       <div class="ctlrow">${key('&uarr;')}${key('Space')}<span>${t('how_jump')}</span></div><p class="small">${t('how_keys')}</p><p class="small">${t('how_touch')}</p><p class="small">${t('tip_jump')}</p></div>`,
@@ -103,23 +103,27 @@ export function goHome(autoLevel) {
   A.startMusic();
   if (autoLevel) return levelStart(autoLevel);
   // v0.4 world map: 9 table worlds in unlock order, then Rainbow. Each card: Level 1, Level 2 and the boss.
+  // hotfix: the next thing to play glows (same pick as the Enter quick-start)
+  const nextId = sc.unlocked.filter((x) => !(pd.levels[x] && pd.levels[x].medal))[0] || null;
   const node = (id) => {
     const open = sc.unlocked.includes(id), r = pd.levels[id] || {}, boss = isBoss(id);
     const label = boss ? t('boss_node') : t('level_n', { n: levelNo(id) });
-    return `<button class="node n-${id} ${boss ? 'nboss' : ''} ${open ? 'open' : 'locked'} ${r.medal ? 'done' : ''}" data-l="${id}" ${open ? '' : 'aria-disabled="true"'}>
-      ${boss ? bossImg().replace('bimg', 'nimg') : ''}<span class="nm">${label}</span><span class="sub">${t('lv_' + id)}</span>${r.medal && !boss ? `<i class="md m${r.medal}"></i>` : ''}${boss && r.medal ? '<i class="md m3"></i>' : ''}${r.brainStar ? '<i class="bs"></i>' : ''}${open ? '' : '<i class="lock"></i>'}</button>`;
+    return `<button class="node n-${id} ${boss ? 'nboss' : ''} ${open ? 'open' : 'locked'} ${r.medal ? 'done' : ''} ${id === nextId ? 'next' : ''}" data-l="${id}" ${open ? '' : 'aria-disabled="true"'}>
+      ${boss ? bossImg(worldOf(id), r.medal ? 'friendly' : 'idle', 'nimg') : ''}<span class="nm">${label}</span><span class="sub">${t('lv_' + id)}</span>${r.medal && !boss ? `<i class="md m${r.medal}"></i>` : ''}${boss && r.medal ? '<i class="md m3"></i>' : ''}${r.brainStar ? '<i class="bs"></i>' : ''}${open ? '' : '<i class="lock"></i>'}</button>`;
   };
   const cur = worldOf(sc.unlocked[sc.unlocked.length - 1] || 'x2-L1');
   const card = (wd, i) => {
     const far = art(['bg', WORLDS[wd].bg, 'far']), ids = CHAIN.filter((id) => worldOf(id) === wd), open = ids.some((id) => sc.unlocked.includes(id));
     const tb = tableOf(ids[0]);
     return `<div class="world w-${wd} ${open ? 'open' : 'locked'} ${wd === cur ? 'cur' : ''}" data-w="${wd}">${far ? `<img class="wbg" src="${far.img.src}" alt="">` : ''}
-      <h2><span class="wn">${i + 1}</span>${t('world_' + wd)} <small>${tb ? t('times_t', { t: tb }) : t('times_all')}</small></h2><div class="path">${ids.map(node).join('')}</div></div>`;
+      <h2><span class="wn">${i + 1}</span>${t('world_' + wd)} <small>${tb ? t('times_t', { t: tb }) : t('times_all')}</small></h2><div class="path">${ids.map(node).join('')}</div>${open || !i ? '' : `<p class="whint">${t('beat_to_open', { w: t('world_' + WORLD_IDS[i - 1]) })}</p>`}</div>`;
   };
   const scr = show('home', `<div class="topbar"><button class="icon me" aria-label="${t(S.pid)}">${ANIMALS[S.pid]}</button><h1>${t('map_title')}</h1><span class="sp"></span>
       <span class="acorns"><i class="ac"></i>${sc.acornsTotal || 0}</span><button class="icon howbtn" aria-label="?">${ICON.help}</button><button class="icon mapbtn" aria-label="${t('map')}">${ICON.map}</button></div>
     <div class="worlds">${WORLD_IDS.map(card).join('')}</div>
     <button class="icon grownup corner" aria-label="${tp('grown_ups')}">${ICON.grownup}</button>`);
+  // hotfix: a mouse wheel scrolls the world row sideways (desktop players could not reach the later worlds with a wheel)
+  const wr0 = $('.worlds', scr); wr0.addEventListener('wheel', (e) => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { wr0.scrollLeft += e.deltaY; e.preventDefault(); } }, { passive: false });
   const curEl = $('.world.cur', scr); if (curEl) requestAnimationFrame(() => { const wr = $('.worlds', scr); wr.scrollLeft = Math.max(0, curEl.offsetLeft - 12); });
   for (const b of $$('.node.open', scr)) b.addEventListener('click', () => { tapSound(); levelStart(b.dataset.l); });
   for (const b of $$('.node.locked', scr)) b.addEventListener('click', () => { A.play('squeak'); b.classList.remove('nope'); void b.offsetWidth; b.classList.add('nope'); });
@@ -195,7 +199,7 @@ export function parentGate(back) {
   const qs = S.strings.parent_gate;
   let wrong = 0, q = qs[rand(qs.length)], typed = '';
   const scr = show('pgate', `<div class="card"><h2>${ICON.grownup} ${tp('grown_ups')}</h2><p class="pq"></p><div class="typed" aria-live="polite"></div><p class="tryagain hidden">${tp('try_again')}</p>
-    <div class="pad">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `<button class="k" data-k="${n}">${n}</button>`).join('')}<button class="k" data-k="del" aria-label="delete">${ICON.back}</button><button class="k" data-k="0">0</button><button class="k ok" data-k="ok">${tp('ok')}</button></div>
+    <div class="gatepad">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `<button class="k" data-k="${n}">${n}</button>`).join('')}<button class="k" data-k="del" aria-label="delete">${ICON.back}</button><button class="k" data-k="0">0</button><button class="k ok" data-k="ok">${tp('ok')}</button></div>
     <button class="btn alt backb">${tp('back')}</button></div>`);
   const setQ = () => { $('.pq', scr).textContent = `${tp('gate_type')} ${q[0]}.`; typed = ''; $('.typed', scr).textContent = ''; };
   setQ();

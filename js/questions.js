@@ -68,6 +68,7 @@ export function makePlan(pd, levelId, today, rng) {
     }
     return noRepeats(plan);
   }
+  if (levelId === 'rb-L1') return rainbowRamp(pd, ids, n, missedL1, weak, rng);
   if (!t) {
     // Rainbow: up to 2 missed facts, the rest weak first with no table twice in a row where possible.
     const miss = shuffle(rng, missedL1.filter((id) => id !== q1)).slice(0, 2);
@@ -83,6 +84,26 @@ export function makePlan(pd, levelId, today, rng) {
   // L1: weak first (new facts are box 0, so they come in), no fact twice.
   for (const id of weak) { if (plan.length >= n) break; if (!used.has(id)) { plan.push(id); used.add(id); } }
   return noRepeats(plan);
+}
+// v0.4.1 Rainbow level 1 ramps up: a sure start (x2 / x10 / x5 with a small number), then 2 easy facts (tables 2, 10, 5),
+// then 2 middle facts (3, 4, 9), then 1 hard fact (6, 7, 8). Up to 2 missed facts may take the middle or hard slots. Seeded.
+export const factTier = (id) => Math.min(...parseFact(id).filter((x) => x > 1).map((x) => Math.floor(ORDER.indexOf(x) / 3)));
+export const SURE_START = [factId(2, 2), factId(2, 3), factId(2, 5), factId(2, 10), factId(3, 10), factId(5, 2), factId(5, 10), factId(10, 10)].filter((v, i, a) => a.indexOf(v) === i);
+const RAMP = [0, 0, 0, 1, 1, 2];
+function rainbowRamp(pd, ids, n, missedL1, weak, rng) {
+  const sure = SURE_START.filter((id) => ids.includes(id));
+  const top = Math.max(...sure.map((id) => fact(pd, id).box)), best = sure.filter((id) => fact(pd, id).box === top);
+  const plan = [best[Math.floor(rng() * best.length)]], used = new Set(plan);
+  const miss = shuffle(rng, missedL1.filter((id) => !used.has(id))).slice(0, 2);
+  for (let i = 1; i < n; i++) {
+    const tier = RAMP[Math.min(i, RAMP.length - 1)];
+    if (tier >= 1 && (i === 3 || i === 5) && miss.length) { const id = miss.shift(); plan.push(id); used.add(id); continue; }
+    const prevT = parseFact(plan[plan.length - 1]);
+    const pool = weak.filter((id) => !used.has(id) && !miss.includes(id) && factTier(id) === tier);
+    const pick = pool.find((id) => !parseFact(id).some((x) => prevT.includes(x) && x !== 1)) || pool[0] || weak.find((id) => !used.has(id));
+    plan.push(pick); used.add(pick);
+  }
+  return plan;
 }
 // After a level: remember what L1 asked and missed (first try) so L2 can reuse the misses; L2 clears the ones it got right.
 export function recordLevel(sc, levelId, answers) {

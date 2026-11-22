@@ -57,12 +57,17 @@ export function migrateLevels(levels, ghosts) {
   for (const [id, n] of Object.entries(fresh)) { L[id] = n; put.push(['levels', id, n]); }
   return { levels: L, ghosts: G, put, del, changed: true };
 }
-// Any level with a medal opens the next one in the chain (used after the v0.3 -> v0.4 level move). Returns true if it changed.
+// Unlock repair, run on every load (v0.4 hotfix). A node counts as done when it has a medal or a finish date (boss wins too).
+// 1) every node up to the furthest unlocked or done node is open (no gaps); 2) a done node opens the next one.
+// Never removes an unlock. Returns true if it changed anything.
+export const isDone = (r) => !!(r && (r.medal || r.finishedOn));
 export function repairUnlocks(sc, levels) {
-  let ch = false;
-  for (let i = 0; i < CHAIN.length - 1; i++) {
-    const r = levels[CHAIN[i]];
-    if (r && r.medal && sc.unlocked.includes(CHAIN[i]) && !sc.unlocked.includes(CHAIN[i + 1])) { sc.unlocked.push(CHAIN[i + 1]); ch = true; }
-  }
-  return ch;
+  if (!Array.isArray(sc.unlocked)) sc.unlocked = ['x2-L1'];
+  const before = sc.unlocked.join();
+  let far = 0;
+  CHAIN.forEach((id, i) => { if (sc.unlocked.includes(id) || isDone(levels[id])) far = i; });
+  for (let i = 0; i <= far; i++) if (isDone(levels[CHAIN[i]]) && i + 1 < CHAIN.length) far = Math.max(far, i + 1);
+  const open = new Set([...sc.unlocked, ...CHAIN.slice(0, far + 1)]);
+  sc.unlocked = [...CHAIN.filter((id) => open.has(id)), ...sc.unlocked.filter((id) => !CHAIN.includes(id))];
+  return sc.unlocked.join() !== before;
 }

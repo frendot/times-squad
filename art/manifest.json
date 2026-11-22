@@ -122,10 +122,10 @@
    "licence": "own (AI-generated for this project)"
   },
   {
-   "file": "bg_x5_mid.png",
+   "file": "bg_x5_mid.webp",
    "key": "bg_x5_mid",
-   "w": 1024,
-   "h": 57,
+   "w": 0,
+   "h": 0,
    "anchor": [
     0,
     1
@@ -221,8 +221,8 @@
    "licence": "own (AI-generated for this project)"
   },
   {
-   "file": "boss_broccoli.webp",
-   "key": "boss_broccoli",
+   "file": "boss_rb_bopped.webp",
+   "key": "boss_rb_bopped",
    "w": 0,
    "h": 0,
    "anchor": [
@@ -232,10 +232,439 @@
    "licence": "own (AI-generated for this project)"
   },
   {
-   "file": "fox_portrait.png",
+   "file": "boss_rb_friendly.webp",
+   "key": "boss_rb_friendly",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_rb_idle.webp",
+   "key": "boss_rb_idle",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_rb_move.webp",
+   "key": "boss_rb_move",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x10_bopped.webp",
+   "key": "boss_x10_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x10_friendly.webp",
+   "key": "boss_x10_friendly",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x10_idle.webp",
+   "key": "boss_x10_idle",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x10_move.webp",
+   "key": "boss_x10_move",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x2_bopped.webp",
+   "key": "boss_x2_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x2_friendly.webp",
+   "key": "boss_x2_friendly",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x2_idle.webp",
+   "key": "boss_x2_idle",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x2_move.webp",
+   "key": "boss_x2_move",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x3_bopped.webp",
+   "key": "boss_x3_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x3_friendly.webp",
+   "key": "boss_x3_friendly",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x3_idle.webp",
+   "key": "boss_x3_idle",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x3_move.webp",
+   "key": "boss_x3_move",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x4_bopped.webp",
+   "key": "boss_x4_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x4_friendly.webp",
+   "key": "boss_x4_friendly",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x4_idle.webp",
+   "key": "boss_x4_idle",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x4_move.webp",
+   "key": "boss_x4_move",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x5_bopped.webp",
+   "key": "boss_x5_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x5_friendly.webp",
+   "key": "boss_x5_friendly",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x5_idle.webp",
+   "key": "boss_x5_idle",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x5_move.webp",
+   "key": "boss_x5_move",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x6_bopped.webp",
+   "key": "boss_x6_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x6_friendly.webp",
+   "key": "boss_x6_friendly",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x6_idle.webp",
+   "key": "boss_x6_idle",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x6_move.webp",
+   "key": "boss_x6_move",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x7_bopped.webp",
+   "key": "boss_x7_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x7_friendly.webp",
+   "key": "boss_x7_friendly",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x7_idle.webp",
+   "key": "boss_x7_idle",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x7_move.webp",
+   "key": "boss_x7_move",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x8_bopped.webp",
+   "key": "boss_x8_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x8_friendly.webp",
+   "key": "boss_x8_friendly",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x8_idle.webp",
+   "key": "boss_x8_idle",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x8_move.webp",
+   "key": "boss_x8_move",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x9_bopped.webp",
+   "key": "boss_x9_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x9_friendly.webp",
+   "key": "boss_x9_friendly",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x9_idle.webp",
+   "key": "boss_x9_idle",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "boss_x9_move.webp",
+   "key": "boss_x9_move",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "fox_portrait.webp",
    "key": "fox_portrait",
-   "w": 511,
-   "h": 512,
+   "w": 0,
+   "h": 0,
    "anchor": [
     0.5,
     0.5
@@ -265,10 +694,10 @@
    "licence": "own (AI-generated for this project)"
   },
   {
-   "file": "monster_frog.png",
+   "file": "monster_frog.webp",
    "key": "monster_frog",
-   "w": 256,
-   "h": 217,
+   "w": 0,
+   "h": 0,
    "anchor": [
     0.5,
     1
@@ -276,10 +705,10 @@
    "licence": "own (AI-generated for this project)"
   },
   {
-   "file": "monster_pinecone.png",
+   "file": "monster_pinecone.webp",
    "key": "monster_pinecone",
-   "w": 202,
-   "h": 256,
+   "w": 0,
+   "h": 0,
    "anchor": [
     0.5,
     1
@@ -287,10 +716,10 @@
    "licence": "own (AI-generated for this project)"
   },
   {
-   "file": "owl_portrait.png",
+   "file": "owl_portrait.webp",
    "key": "owl_portrait",
-   "w": 512,
-   "h": 462,
+   "w": 0,
+   "h": 0,
    "anchor": [
     0.5,
     0.5
