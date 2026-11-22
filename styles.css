@@ -471,3 +471,19 @@ i.bs { width: 26px; height: 26px; background: #ffd23f; clip-path: polygon(50% 0,
 .mapwrap .key { font-size: 16px; display: grid; grid-template-columns: auto 1fr; gap: 6px 8px; align-items: center; }
 .mapwrap .key .cell { width: 26px; height: 26px; }
 @media (max-height: 520px) { .mapwrap { justify-content: center; gap: 10px; } .mapwrap .key { font-size: 14px; } }
+/* ---- v0.4 world map: 10 world cards in a sideways scroll, in unlock order ---- */
+.worlds { display: flex; gap: 14px; width: 100%; flex: 1; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; padding: 4px 4px 14px; align-items: stretch; -webkit-overflow-scrolling: touch; }
+.world { position: relative; flex: none; width: min(300px, 42vw); border: 5px solid var(--ink); border-radius: 24px; padding: 6px 10px 12px; display: flex; flex-direction: column; overflow: hidden; scroll-snap-align: start; background: #c8f0ff; }
+.world .wbg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; pointer-events: none; }
+.world > h2, .world > .path { position: relative; z-index: 1; }
+.world h2 { font-size: 20px; margin: 2px 0 4px; background: #ffffffd9; border: 3px solid var(--ink); border-radius: 14px; padding: 2px 8px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.world h2 .wn { display: inline-flex; width: 26px; height: 26px; border-radius: 50%; background: var(--ink); color: #fff; align-items: center; justify-content: center; font-size: 15px; }
+.world h2 small { font-size: 14px; }
+.world.locked { filter: saturate(.35) brightness(.95); }
+.world.cur { box-shadow: 0 0 0 5px #5fb3ff; }
+.world .path { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; gap: 10px 10px; flex: 1; align-content: center; margin: 4px 0; }
+.world .path .node { min-height: 78px; }
+.world .path .node:nth-child(even) { transform: none; }
+.world .path .node.nboss { grid-column: 1 / span 2; flex-direction: row; gap: 8px; min-height: 64px; }
+.world .path .node.nboss.open { background: #e5ffd9; }
+@media (max-height: 520px) { .world { width: min(250px, 36vw); } .world h2 { font-size: 16px; } .world .path .node { min-height: 58px; padding: 4px; } .world .path .node.nboss { min-height: 48px; } }

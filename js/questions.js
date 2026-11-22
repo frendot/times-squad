@@ -5,17 +5,15 @@ import { factId, parseFact } from './facts.js';
 import { candidates } from './gen.js';
 import { rngOn, seedFrom, weighted } from './rng.js';
 import { newFact, introduce, firstTry, daysBetween } from './learn.js';
+import { ORDER, tableOf, isBoss, levelIndex, levelNo } from './levels.js';
 
-export const LEVEL_FACTS = {
-  'x2-L1': [1, 2, 3, 4, 5].map((k) => factId(2, k)),
-  'x2-L2': [6, 7, 8, 9, 10].map((k) => factId(2, k)),
-  'x2-L3': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((k) => factId(2, k)),
-  'x2-RR': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((k) => factId(2, k)),
-  'spring-boss': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((k) => factId(2, k)),
-};
-const LEVEL_INDEX = { 'x2-L1': 0, 'x2-L2': 1, 'x2-L3': 2, 'x2-RR': 3, 'spring-boss': 4 };
-export const QUESTIONS = { 'x2-L1': 8, 'x2-L2': 8, 'x2-L3': 8, 'x2-RR': 6, 'spring-boss': 5 };
-
+// v0.4: each table x2..x10 has its own facts (t x 1 .. t x 10); the Rainbow stage mixes all of them.
+export const tableFacts = (t) => [...new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((k) => factId(t, k)))];
+export const RAINBOW_FACTS = [...new Set(ORDER.flatMap((t) => [2, 3, 4, 5, 6, 7, 8, 9, 10].map((k) => factId(t, k))))];
+export const factsFor = (levelId) => (tableOf(levelId) ? tableFacts(tableOf(levelId)) : RAINBOW_FACTS);
+export const questionsFor = (levelId) => (isBoss(levelId) ? 5 : 6);
+export const QUESTIONS = new Proxy({}, { get: (_, id) => questionsFor(String(id)) });
+const LEVEL_INDEX = new Proxy({}, { get: (_, id) => levelIndex(String(id)) });
 export function hashStr(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h | 0; }
 export const runSeed = (pid, levelId, playCount) => seedFrom(hashStr(pid) ^ LEVEL_INDEX[levelId] ^ Math.imul(playCount + 1, 0x9e37));
 
@@ -38,30 +36,64 @@ function noRepeats(plan) {
   return plan;
 }
 
-// The plan (5.2 for levels, 5.3 for the Review Road, weakest five for the boss).
+// The plan. L1: a sure start, then weak first. L2: the facts this player missed in L1 come back (spaced out),
+// then facts L1 did not ask, then weak first. Rainbow: all tables, weak first, with missed facts mixed in. Boss: the weakest five.
+const strongest = (pd, ids, rng) => { const top = Math.max(...ids.map((id) => fact(pd, id).box)); const best = ids.filter((id) => fact(pd, id).box === top); return best[Math.floor(rng() * best.length)]; };
 export function makePlan(pd, levelId, today, rng) {
-  const ids = LEVEL_FACTS[levelId], n = QUESTIONS[levelId];
-  if (levelId === 'x2-RR' || levelId === 'spring-boss') {
-    const list = (pd.progress.scroller && pd.progress.scroller.reviewList) || [];
-    const pri = new Map(ids.map((id) => [id, (list.includes(id) ? 4 : 0) + Math.min(3, recentMisses(pd, id, today)) + (fact(pd, id).box <= 1 ? 2 : 0) + rng()]));
-    const order = ids.slice().sort((p, q) => pri.get(q) - pri.get(p));
-    let plan = order.slice(0, n);
-    if (levelId === 'x2-RR') plan = shuffle(rng, plan); // the road mixes them up
+  const t = tableOf(levelId), ids = factsFor(levelId), n = questionsFor(levelId);
+  const sc = (pd.progress && pd.progress.scroller) || {};
+  const missedL1 = (t ? (sc.l1Missed || {})[t] || [] : Object.values(sc.l1Missed || {}).flat()).filter((id) => ids.includes(id));
+  if (isBoss(levelId)) {
+    const pri = new Map(ids.map((id) => [id, (missedL1.includes(id) ? 4 : 0) + Math.min(3, recentMisses(pd, id, today)) + (fact(pd, id).box <= 1 ? 2 : 0) + rng()]));
+    return noRepeats(ids.slice().sort((p, q) => pri.get(q) - pri.get(p)).slice(0, n));
+  }
+  const allNew = ids.every((id) => fact(pd, id).box === 0);
+  const lv = levelNo(levelId);
+  let q1;
+  if (allNew) q1 = t === 2 ? factId(2, 2) : t === 10 ? factId(2, 10) : t ? factId(t, 10) : factId(2, 10);
+  else q1 = strongest(pd, ids.filter((id) => !missedL1.includes(id) || ids.length <= 1), rng) || strongest(pd, ids, rng);
+  const plan = [q1];
+  const used = new Set([q1]);
+  const weak = weakOrder(pd, ids, today, rng);
+  if (t && lv === 2) {
+    // L2: missed facts at slots 1, 3, 5 (spaced); then facts L1 never asked; then weak first.
+    const miss = shuffle(rng, missedL1.filter((id) => id !== q1));
+    const asked = new Set((sc.l1Asked || {})[t] || []);
+    const notAsked = weak.filter((id) => !asked.has(id) && !used.has(id) && !miss.includes(id));
+    const slots = [1, 3, 5, 2, 4].slice(0, Math.min(miss.length, n - 1));
+    const filler = [...notAsked, ...weak.filter((id) => !notAsked.includes(id) && !miss.includes(id) && id !== q1)];
+    for (let i = 1; i < n; i++) {
+      if (slots.includes(i) && miss.length) { const id = miss.shift(); plan.push(id); used.add(id); continue; }
+      const id = filler.find((x) => !used.has(x)) || weak[i % weak.length]; plan.push(id); used.add(id);
+    }
     return noRepeats(plan);
   }
-  // Q1: the strongest fact (a sure start); all new: 2 x 2 (L1) or 2 x 10.
-  const allNew = ids.every((id) => fact(pd, id).box === 0);
-  let q1;
-  if (allNew) q1 = levelId === 'x2-L1' ? factId(2, 2) : factId(2, 10);
-  else { const top = Math.max(...ids.map((id) => fact(pd, id).box)); const best = ids.filter((id) => fact(pd, id).box === top); q1 = best[Math.floor(rng() * best.length)]; }
-  const rest = [];
-  const others = ids.filter((id) => id !== q1);
-  if (ids.length <= n) { rest.push(...shuffle(rng, others)); }
-  const weak = weakOrder(pd, levelId === 'x2-L3' ? others : ids, today, rng);
-  let k = 0;
-  while (rest.length < n - 1) { const id = weak[k++ % weak.length]; if (levelId === 'x2-L3' && rest.includes(id) && k <= weak.length) continue; rest.push(id); }
-  // Extra (weak) slots go after the first round; keep them apart from their twin.
-  return noRepeats([q1, ...rest]);
+  if (!t) {
+    // Rainbow: up to 2 missed facts, the rest weak first with no table twice in a row where possible.
+    const miss = shuffle(rng, missedL1.filter((id) => id !== q1)).slice(0, 2);
+    const pool = weak.filter((id) => !used.has(id) && !miss.includes(id));
+    for (let i = 1; i < n; i++) {
+      if ((i === 2 || i === 4) && miss.length) { const id = miss.shift(); plan.push(id); used.add(id); continue; }
+      const prevT = parseFact(plan[plan.length - 1]);
+      const j = pool.findIndex((id) => { const f = parseFact(id); return !f.some((x) => prevT.includes(x) && x !== 1); });
+      plan.push(pool.splice(j >= 0 ? j : 0, 1)[0]);
+    }
+    return noRepeats(plan);
+  }
+  // L1: weak first (new facts are box 0, so they come in), no fact twice.
+  for (const id of weak) { if (plan.length >= n) break; if (!used.has(id)) { plan.push(id); used.add(id); } }
+  return noRepeats(plan);
+}
+// After a level: remember what L1 asked and missed (first try) so L2 can reuse the misses; L2 clears the ones it got right.
+export function recordLevel(sc, levelId, answers) {
+  const t = tableOf(levelId); if (!t || isBoss(levelId)) return sc;
+  sc.l1Missed = sc.l1Missed || {}; sc.l1Asked = sc.l1Asked || {};
+  const asked = [...new Set(answers.map((a) => a.q))];
+  const missed = [...new Set(answers.filter((a) => !a.first).map((a) => a.q))];
+  const rightFirst = new Set(answers.filter((a) => a.first).map((a) => a.q));
+  if (levelNo(levelId) === 1) { sc.l1Asked[t] = asked; sc.l1Missed[t] = [...new Set([...(sc.l1Missed[t] || []).filter((id) => !rightFirst.has(id)), ...missed])]; }
+  else sc.l1Missed[t] = (sc.l1Missed[t] || []).filter((id) => !rightFirst.has(id) || missed.includes(id));
+  return sc;
 }
 
 // Distractors (5.4) with even preference and a balanced "answer is biggest / smallest" share.
@@ -103,7 +135,7 @@ export function makeChoices(a, b, { rng, prev, recentWrong = [], balance }) {
 // Right-answer positions: a bag of 3 left, 3 middle, 2 right (rotated per level), never 3 in a row.
 export function positionBag(rng, levelId, n) {
   const li = LEVEL_INDEX[levelId] || 0;
-  const counts = [[3, 3, 2], [2, 3, 3], [3, 2, 3]][li % 3];
+  const counts = n <= 6 ? [2, 2, 2] : [[3, 3, 2], [2, 3, 3], [3, 2, 3]][li % 3];
   let bag = []; counts.forEach((k, p) => { for (let i = 0; i < k; i++) bag.push(p); });
   for (let tries = 0; tries < 50; tries++) {
     const s = shuffle(rng, bag);
@@ -112,7 +144,9 @@ export function positionBag(rng, levelId, n) {
   return bag.slice(0, n);
 }
 
-const doubleLine = (id) => { const [a, b] = parseFact(id); const k = a === 2 ? b : a; return { k, c: 2 * k }; };
+// The table a fact is shown under: the level's table, or (Rainbow) the bigger factor.
+export const tableFor = (levelId, id) => { const [a, b] = parseFact(id); const t = tableOf(levelId); return t && (a === t || b === t) ? t : Math.max(a, b); };
+export const strategyFor = (t, id) => { const [a, b] = parseFact(id); const k = a === t ? b : a; return { t, k, c: t * k }; };
 
 // The context the simulation talks to. pd is changed in place (learning), and saved by the game.
 export function makeCtx(pd, levelId, today, playCount) {
@@ -130,21 +164,21 @@ export function makeCtx(pd, levelId, today, playCount) {
   const ctx = {
     plan, reviewAdd, missedHere, run,
     ask(i, w) {
-      if (levelId === 'spring-boss' && i >= plan.length) plan.push(plan[i % 5]);
+      if (i >= plan.length) plan.push(plan[i % Math.max(1, plan.length)]);
       let id = plan[i];
       if (id === prev && plan.length > i + 1) { [plan[i], plan[i + 1]] = [plan[i + 1], plan[i]]; id = plan[i]; }
       const f = fact(pd, id);
       const [x, y] = parseFact(id);
-      const other = x === 2 ? y : x;
+      const tt = tableFor(levelId, id), other = x === tt ? y : x;
       const met = Math.max(f.attempts || 0, seen[id] || 0);
       seen[id] = (seen[id] || 0) + 1;
-      const twoFirst = met < 2 || rng() < 0.5;
-      const a = twoFirst ? 2 : other, b = twoFirst ? other : 2;
+      const tFirst = met < 2 || rng() < 0.5; // the table number first for the first 2 meetings
+      const a = tFirst ? tt : other, b = tFirst ? other : tt;
       const c = a * b;
       const recentWrong = (pd.attempts || []).filter((t) => t.factId === id && !t.right && typeof t.chosen === 'number').slice(-3).map((t) => t.chosen);
       const ds = makeChoices(a, b, { rng, prev, recentWrong, balance });
-      let pos = levelId === 'spring-boss' ? Math.floor(rng() * 3) : bag[i % bag.length];
-      if (levelId === 'spring-boss' && run.lastPos && run.lastPos[0] === run.lastPos[1] && pos === run.lastPos[0]) pos = (pos + 1 + Math.floor(rng() * 2)) % 3;
+      let pos = isBoss(levelId) ? Math.floor(rng() * 3) : bag[i % bag.length];
+      if (isBoss(levelId) && run.lastPos && run.lastPos[0] === run.lastPos[1] && pos === run.lastPos[0]) pos = (pos + 1 + Math.floor(rng() * 2)) % 3;
       run.lastPos = [pos, ...(run.lastPos || [])].slice(0, 2);
       const choices = [null, null, null]; choices[pos] = c;
       const rest = [0, 1, 2].filter((p) => p !== pos); choices[rest[0]] = ds[0].value; choices[rest[1]] = ds[1].value;
@@ -158,21 +192,21 @@ export function makeCtx(pd, levelId, today, playCount) {
       const repeat = !right && (missedHere.has(q.factId) || misses > 0 || recentMisses(pd, q.factId, today, 14) > 0);
       if (first) {
         if (f.box === 0) introduce(f, today);
-        const lead = levelId === 'spring-boss' ? 0 : 5000;
+        const lead = isBoss(levelId) ? 0 : 5000;
         const timeMs = w ? Math.max(500, ((w.steps - q.askStep) / 60) * 1000 - lead) : 3000;
         firstTry(f, { right, timeMs, k: 3, today });
         pd.attempts = [...(pd.attempts || []), { day: today, factId: q.factId, shown: `${q.a} x ${q.b}`, chosen: q.choices[idx], right, firstTry: true,
-          timeMs: Math.round(timeMs), distractors: q.distractors, kind: levelId === 'spring-boss' ? 'boss' : 'scroller' }].slice(-CONFIG.ATTEMPTS_KEEP);
+          timeMs: Math.round(timeMs), distractors: q.distractors, kind: isBoss(levelId) ? 'boss' : 'scroller' }].slice(-CONFIG.ATTEMPTS_KEEP);
         if (!right) {
           missedHere.add(q.factId);
           // Comes back 2 or 3 questions later, or goes on the Review Road list.
-          const back = q.i + (levelId === 'spring-boss' ? 2 : rng() < 0.5 ? 2 : 3);
-          if (levelId === 'spring-boss') { plan.splice(Math.min(back, plan.length), 0, q.factId); }
-          else if (back < nQ && levelId !== 'x2-RR') { plan.splice(back, 0, q.factId); plan.length = Math.max(nQ, plan.length); plan.splice(nQ); noRepeatsFrom(plan, q.i + 1); }
+          const back = q.i + (isBoss(levelId) ? 2 : rng() < 0.5 ? 2 : 3);
+          if (isBoss(levelId)) { plan.splice(Math.min(back, plan.length), 0, q.factId); }
+          else if (back < nQ) { plan.splice(back, 0, q.factId); plan.length = Math.max(nQ, plan.length); plan.splice(nQ); noRepeatsFrom(plan, q.i + 1); }
           else if (!reviewAdd.includes(q.factId)) reviewAdd.push(q.factId);
         }
       }
-      const s = doubleLine(q.factId);
+      const s = strategyFor(tableFor(levelId, q.factId), q.factId);
       return { right, repeat, strategy: s };
     },
     powerFor(i) {

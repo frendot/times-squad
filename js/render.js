@@ -3,9 +3,11 @@ import { CONFIG as C } from './config.js';
 import { art } from './artpack.js';
 import { drawFox, runPose, poseOf, blend, rigReady } from './puppet.js';
 import { onewaysAt, bossPlats } from './sim.js';
+import { WORLDS } from './levels.js';
 
 export const VW = 960, VH = 540, T = 48;
 const GY = VH - 96; // screen y of the ground top when the camera is low
+let P = WORLDS.x2; // the current world's ground and platform colours
 const R = { cam: { x: 0, y: 0 }, phase: 0, idleT: 0, parts: [], blinkT: 3, t: 0, poseK: 0, last: null, fx: [] };
 export function resetView(w) { R.cam.x = Math.max(0, w.fox.x - 7); R.cam.y = 0; R.parts = []; R.fx = []; R.phase = 0; }
 const sx = (x) => (x - R.cam.x) * T, sy = (y) => GY - (y - R.cam.y) * T;
@@ -22,30 +24,30 @@ function img(g, a, x, y, h, { flip = false, alpha = 1, rot = 0, sxs = 1, sys = 1
 
 // ---- background ----
 function background(g, w) {
-  const far = art(['bg', 'spring', 'far']);
+  const far = art(['bg', P.bg, 'far']);
   if (far) {
     const h = VH, wd = (far.w / far.h) * h, off = (R.cam.x * T * 0.08) % wd;
     for (let x = -off; x < VW; x += wd) g.drawImage(far.img, x, -R.cam.y * T * 0.05, wd, h);
   } else { const gr = g.createLinearGradient(0, 0, 0, VH); gr.addColorStop(0, '#8fd3ff'); gr.addColorStop(1, '#dff5ff'); g.fillStyle = gr; g.fillRect(0, 0, VW, VH); }
-  const mid = art(['bg', 'spring', 'mid']);
+  const mid = art(['bg', P.bg, 'mid']);
   if (mid) {
-    const h = 150, wd = (mid.w / mid.h) * h, off = (R.cam.x * T * 0.35) % wd, y = sy(0) - h + 24 + R.cam.y * T * 0.6;
+    const h = P.bg === 'spring' ? 150 : Math.max(60, Math.min(150, mid.h * 0.6)), wd = (mid.w / mid.h) * h, off = (R.cam.x * T * 0.35) % wd, y = sy(0) - h + 24 + R.cam.y * T * 0.6;
     g.save(); g.globalAlpha = 0.8; for (let x = -off; x < VW; x += wd) g.drawImage(mid.img, x, y, wd, h); g.restore();
   }
 }
 function leafBed(g, x0, x1) {
   const a = sx(x0), b = sx(x1), y = sy(-1.15);
   if (b < -20 || a > VW + 20) return;
-  g.fillStyle = '#6b4a2b'; g.fillRect(a, y + 10, b - a, VH - y);
-  for (let x = a + 6, i = 0; x < b - 4; x += 13, i++) { g.beginPath(); g.ellipse(x, y + 8 + (i % 3) * 4, 10, 6, (i % 5) * 0.6, 0, Math.PI * 2); g.fillStyle = ['#e8902f', '#d9662a', '#f2b33d', '#b5562a'][i % 4]; g.fill(); }
+  g.fillStyle = P.dot; g.fillRect(a, y + 10, b - a, VH - y);
+  for (let x = a + 6, i = 0; x < b - 4; x += 13, i++) { g.beginPath(); g.ellipse(x, y + 8 + (i % 3) * 4, 10, 6, (i % 5) * 0.6, 0, Math.PI * 2); g.fillStyle = P.bed[i % 4]; g.fill(); }
 }
 function earth(g, x0, x1, top, bot) {
   const a = sx(x0), b = sx(x1), y = sy(top), yb = bot <= -10 ? VH + 10 : sy(bot);
   if (b < -40 || a > VW + 40) return;
-  rr(g, a, y, b - a, yb - y, 10); outlineFill(g, '#9a6a3e');
-  g.fillStyle = '#86592f'; for (let x = a + 14; x < b - 10; x += 34) for (let yy = y + 30; yy < Math.min(yb - 8, VH); yy += 30) { g.beginPath(); g.arc(x + ((yy / 30) % 2) * 12, yy, 4, 0, 7); g.fill(); }
-  rr(g, a - 3, y - 4, b - a + 6, 16, 8); outlineFill(g, '#6cc04a');
-  g.fillStyle = '#86d35f'; g.fillRect(a + 4, y - 1, b - a - 8, 4);
+  rr(g, a, y, b - a, yb - y, 10); outlineFill(g, P.dirt);
+  g.fillStyle = P.dot; for (let x = a + 14; x < b - 10; x += 34) for (let yy = y + 30; yy < Math.min(yb - 8, VH); yy += 30) { g.beginPath(); g.arc(x + ((yy / 30) % 2) * 12, yy, 4, 0, 7); g.fill(); }
+  rr(g, a - 3, y - 4, b - a + 6, 16, 8); outlineFill(g, P.grass);
+  g.fillStyle = P.grass2; g.fillRect(a + 4, y - 1, b - a - 8, 4);
 }
 function log(g, x0, x1, top, bot) {
   const a = sx(x0), b = sx(x1), y = sy(top), yb = sy(bot);
@@ -54,8 +56,8 @@ function log(g, x0, x1, top, bot) {
   g.strokeStyle = '#5e3a1a'; g.lineWidth = 2; g.beginPath(); g.moveTo(a + 10, y + 12); g.lineTo(b - 30, y + 12); g.stroke();
   g.fillStyle = '#7cc251'; g.beginPath(); g.ellipse(a + (b - a) * 0.35, y + 2, 14, 6, 0, 0, 7); g.fill();
 }
-function plank(g, x0, x1, y) { const a = sx(x0), b = sx(x1), yy = sy(y); rr(g, a, yy - 2, b - a, 16, 6); outlineFill(g, '#c98a4b'); g.strokeStyle = '#8a5a2b'; g.lineWidth = 2; for (let x = a + 24; x < b - 8; x += 24) { g.beginPath(); g.moveTo(x, yy); g.lineTo(x, yy + 12); g.stroke(); } }
-function leaf(g, x0, x1, y) { const a = sx(x0), b = sx(x1), yy = sy(y); g.beginPath(); g.moveTo(a - 6, yy + 4); g.quadraticCurveTo((a + b) / 2, yy - 14, b + 8, yy + 2); g.quadraticCurveTo((a + b) / 2, yy + 22, a - 6, yy + 4); outlineFill(g, '#58b947', '#24531d'); g.strokeStyle = '#2f7a28'; g.lineWidth = 2; g.beginPath(); g.moveTo(a, yy + 5); g.lineTo(b, yy + 3); g.stroke(); }
+function plank(g, x0, x1, y) { const a = sx(x0), b = sx(x1), yy = sy(y); rr(g, a, yy - 2, b - a, 16, 6); outlineFill(g, P.plank); g.strokeStyle = P.plank2; g.lineWidth = 2; for (let x = a + 24; x < b - 8; x += 24) { g.beginPath(); g.moveTo(x, yy); g.lineTo(x, yy + 12); g.stroke(); } }
+function leaf(g, x0, x1, y) { const a = sx(x0), b = sx(x1), yy = sy(y); g.beginPath(); g.moveTo(a - 6, yy + 4); g.quadraticCurveTo((a + b) / 2, yy - 14, b + 8, yy + 2); g.quadraticCurveTo((a + b) / 2, yy + 22, a - 6, yy + 4); outlineFill(g, P.leaf, '#24531d'); g.strokeStyle = 'rgba(0,0,0,0.25)'; g.lineWidth = 2; g.beginPath(); g.moveTo(a, yy + 5); g.lineTo(b, yy + 3); g.stroke(); }
 function mushroom(g, x) { const X = sx(x), Y = sy(0); rr(g, X - 9, Y - 20, 18, 22, 6); outlineFill(g, '#fff1dc'); g.beginPath(); g.ellipse(X, Y - 22, 30, 16, 0, Math.PI, 0); g.closePath(); outlineFill(g, '#e8433b'); g.fillStyle = '#fff'; for (const [dx, dy] of [[-14, -28], [2, -33], [16, -26]]) { g.beginPath(); g.arc(X + dx, Y + dy, 4, 0, 7); g.fill(); } }
 function acorn(g, x, y, s = 1) { const X = sx(x), Y = sy(y); g.save(); g.translate(X, Y); g.scale(s, s); g.beginPath(); g.ellipse(0, 4, 8, 10, 0, 0, 7); outlineFill(g, '#c9852f', '#3a2116', 3); g.beginPath(); g.ellipse(0, -4, 10, 6, 0, Math.PI, 0); g.closePath(); outlineFill(g, '#7a4d24', '#3a2116', 3); g.fillStyle = '#3a2116'; g.fillRect(-1.5, -14, 3, 6); g.restore(); }
 function flower(g, x, y) { const X = sx(x), Y = sy(y); for (let i = 0; i < 5; i++) { const a = (i / 5) * Math.PI * 2 + R.t; g.beginPath(); g.arc(X + Math.cos(a) * 9, Y + Math.sin(a) * 9, 7, 0, 7); outlineFill(g, '#ff8fc8', '#7a2a55', 2); } g.beginPath(); g.arc(X, Y, 6, 0, 7); outlineFill(g, '#ffd23f', '#7a5a10', 2); }
@@ -199,9 +201,15 @@ function drawEffects(g, dt) {
   R.fx = R.fx.filter((e) => e.t < 0.7);
 }
 
+function fence(g, x) {
+  const X = sx(x), Y = sy(0);
+  g.fillStyle = P.plank; g.strokeStyle = '#3a2116'; g.lineWidth = 3;
+  for (const dx of [-14, 0, 14]) { rr(g, X + dx - 5, Y - 62, 10, 62, 3); g.fill(); g.stroke(); }
+  for (const dy of [-48, -22]) { rr(g, X - 22, Y + dy, 44, 9, 3); g.fill(); g.stroke(); }
+}
 // ---- one frame ----
 export function draw(g, w, dt, { ghostAt = null } = {}) {
-  R.t += dt;
+  R.t += dt; P = WORLDS[w.lvl.world] || WORLDS.x2;
   const f = w.fox, L = w.lvl;
   // camera: Fox at 35% from the left, smooth; up when Fox is high (Spring Boots)
   const len = L.length || 20;
@@ -218,7 +226,8 @@ export function draw(g, w, dt, { ghostAt = null } = {}) {
   for (let i = 1; i < gr.length; i++) if (gr[i][0] > gr[i - 1][1]) leafBed(g, gr[i - 1][1], gr[i][0]);
   for (const s of gr) earth(g, s[0], s[1], s[2] ?? 0, -40);
   for (const s of L.solids || []) { if ((s[3] ?? 0) > 0.05 || s[2] - (s[3] ?? 0) <= 1.05) log(g, s[0], s[1], s[2], s[3] ?? 0); else earth(g, s[0], s[1], s[2], s[3] ?? 0); }
-  if (L.walls) for (const x of L.walls) { g.fillStyle = '#5a8f3c'; g.fillRect(sx(x - 0.5), 0, T, VH); }
+  // v0.4: walls are invisible (v0.3 drew them as full-height green bars); the boss arena shows a short fence instead.
+  if (L.fence) fence(g, L.fence);
   for (const m of L.mushrooms || []) mushroom(g, m[0]);
   for (const p of onewaysAt(w)) { if (p.num) continue; if (p.mover) leaf(g, p.x0, p.x1, p.y); else plank(g, p.x0, p.x1, p.y); }
   if (L.checkpoint) flag(g, L.checkpoint, false);

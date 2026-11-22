@@ -1,6 +1,28 @@
 {
  "sprites": [
   {
+   "file": "bg_rb_far.webp",
+   "key": "bg_rb_far",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0,
+    0
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bg_rb_mid.webp",
+   "key": "bg_rb_mid",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
    "file": "bg_spring_far.webp",
    "key": "bg_spring_far",
    "w": 0,
@@ -14,6 +36,182 @@
   {
    "file": "bg_spring_mid.webp",
    "key": "bg_spring_mid",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bg_x10_far.webp",
+   "key": "bg_x10_far",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0,
+    0
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bg_x10_mid.webp",
+   "key": "bg_x10_mid",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bg_x3_far.webp",
+   "key": "bg_x3_far",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0,
+    0
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bg_x3_mid.webp",
+   "key": "bg_x3_mid",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bg_x4_far.webp",
+   "key": "bg_x4_far",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0,
+    0
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bg_x4_mid.webp",
+   "key": "bg_x4_mid",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bg_x5_far.webp",
+   "key": "bg_x5_far",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0,
+    0
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bg_x5_mid.png",
+   "key": "bg_x5_mid",
+   "w": 1024,
+   "h": 57,
+   "anchor": [
+    0,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bg_x6_far.webp",
+   "key": "bg_x6_far",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0,
+    0
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bg_x6_mid.webp",
+   "key": "bg_x6_mid",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bg_x7_far.webp",
+   "key": "bg_x7_far",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0,
+    0
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bg_x7_mid.webp",
+   "key": "bg_x7_mid",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bg_x8_far.webp",
+   "key": "bg_x8_far",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0,
+    0
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bg_x8_mid.webp",
+   "key": "bg_x8_mid",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0,
+    1
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bg_x9_far.webp",
+   "key": "bg_x9_far",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0,
+    0
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bg_x9_mid.webp",
+   "key": "bg_x9_mid",
    "w": 0,
    "h": 0,
    "anchor": [

@@ -1,7 +1,7 @@
 // On-device storage (spec 11): IndexedDB "times-squad". Nothing leaves the device. Each player (animal icon) has its own
 // progress, facts, run, history and play time, keyed by the player id. If IndexedDB is not available the game runs from memory.
 import { CONFIG } from './config.js';
-import { newPlayerData, migrate } from './player.js';
+import { newPlayerData, migrate, migrateLevels, repairUnlocks } from './player.js';
 export { migrate };
 
 const DB = 'times-squad', VER = 2; // v0.3: IDB version 2 adds 'levels' and 'ghosts' (spec 12.2); nothing is removed
@@ -58,12 +58,23 @@ export async function loadPlayer(pid) {
     pd.progress = p3;
     (lvKeys || []).forEach((k, i) => { pd.levels[k.slice(pid.length + 1)] = lv[i]; });
     (ghKeys || []).forEach((k, i) => { pd.ghosts[k.slice(pid.length + 1)] = gh[i]; });
-    const oldRun = run && !run.kind;
-    if (prog && (changed || oldRun)) {
+    // v0.4: v0.3 level records and ghosts move to the new level ids (medals, Brain Stars, plays and ghosts are kept).
+    const mv = migrateLevels(pd.levels, pd.ghosts);
+    if (mv.changed) {
+      pd.levels = mv.levels; pd.ghosts = mv.ghosts;
+      const w2 = tx(['levels', 'ghosts'], 'readwrite');
+      for (const [s, id] of mv.del) w2.objectStore(s).delete(pid + ':' + id);
+      for (const [s, id, v] of mv.put) w2.objectStore(s).put(v, pid + ':' + id);
+      await done(w2);
+    }
+    const fixed = repairUnlocks(pd.progress.scroller, pd.levels);
+    const v3run = run && run.kind === 'level' && !run.v4; // a v0.3 checkpoint belongs to an old course
+    const oldRun = (run && !run.kind) || v3run;
+    if (prog && (changed || oldRun || fixed)) {
       const w = tx(['progress', 'run'], 'readwrite'); w.objectStore('progress').put(pd.progress, pid); if (oldRun) w.objectStore('run').delete(pid); await done(w);
     }
     for (const f of facts || []) { const { pid: _p, ...rest } = f; pd.facts[f.factId] = rest; }
-    pd.run = run && run.kind ? run : null;
+    pd.run = run && run.kind && !v3run ? run : null;
     pd.playtime = Object.fromEntries((play || []).map((p) => [p.day, p.activeSeconds]));
     const atts = await byPid('attempts', pid);
     pd.attempts = (atts || []).slice(-CONFIG.ATTEMPTS_KEEP).map(({ pid: _p, ...a }) => a);

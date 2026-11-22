@@ -10,7 +10,7 @@ const face = (p) => { const a = art([p, 'portrait']); return a ? `<img class="po
 import { factId, parseFact, groupOf } from './facts.js';
 import { addDays, daysBetween } from './learn.js';
 import { playLevel, loadLevel, fmtTime, fmtTarget } from './game.js';
-import { LEVEL_IDS } from './player.js';
+import { LEVEL_IDS, CHAIN, WORLD_IDS, WORLDS, isBoss, tableOf, worldOf, levelNo } from './levels.js';
 import { iconCanvas, foxCanvas } from './render.js';
 import { targets } from './config.js';
 
@@ -102,17 +102,25 @@ export function goHome(autoLevel) {
   const pd = S.pd, sc = pd.progress.scroller;
   A.startMusic();
   if (autoLevel) return levelStart(autoLevel);
-  const node = (id, i) => {
-    const open = sc.unlocked.includes(id), r = pd.levels[id] || {};
-    const label = id === 'x2-RR' ? t('review_road') : id === 'spring-boss' ? t('boss_name') : t('level_n', { n: i + 1 });
-    return `<button class="node n-${id} ${open ? 'open' : 'locked'} ${r.medal ? 'done' : ''}" data-l="${id}" ${open ? '' : 'aria-disabled="true"'}>
-      ${id === 'spring-boss' ? bossImg().replace('bimg', 'nimg') : id === 'x2-RR' ? '' : ''}<span class="nm">${label}</span><span class="sub">${t('lv_' + id)}</span>${r.medal ? `<i class="md m${r.medal}"></i>` : ''}${r.brainStar ? '<i class="bs"></i>' : ''}${open ? '' : '<i class="lock"></i>'}</button>`;
+  // v0.4 world map: 9 table worlds in unlock order, then Rainbow. Each card: Level 1, Level 2 and the boss.
+  const node = (id) => {
+    const open = sc.unlocked.includes(id), r = pd.levels[id] || {}, boss = isBoss(id);
+    const label = boss ? t('boss_node') : t('level_n', { n: levelNo(id) });
+    return `<button class="node n-${id} ${boss ? 'nboss' : ''} ${open ? 'open' : 'locked'} ${r.medal ? 'done' : ''}" data-l="${id}" ${open ? '' : 'aria-disabled="true"'}>
+      ${boss ? bossImg().replace('bimg', 'nimg') : ''}<span class="nm">${label}</span><span class="sub">${t('lv_' + id)}</span>${r.medal && !boss ? `<i class="md m${r.medal}"></i>` : ''}${boss && r.medal ? '<i class="md m3"></i>' : ''}${r.brainStar ? '<i class="bs"></i>' : ''}${open ? '' : '<i class="lock"></i>'}</button>`;
+  };
+  const cur = worldOf(sc.unlocked[sc.unlocked.length - 1] || 'x2-L1');
+  const card = (wd, i) => {
+    const far = art(['bg', WORLDS[wd].bg, 'far']), ids = CHAIN.filter((id) => worldOf(id) === wd), open = ids.some((id) => sc.unlocked.includes(id));
+    const tb = tableOf(ids[0]);
+    return `<div class="world w-${wd} ${open ? 'open' : 'locked'} ${wd === cur ? 'cur' : ''}" data-w="${wd}">${far ? `<img class="wbg" src="${far.img.src}" alt="">` : ''}
+      <h2><span class="wn">${i + 1}</span>${t('world_' + wd)} <small>${tb ? t('times_t', { t: tb }) : t('times_all')}</small></h2><div class="path">${ids.map(node).join('')}</div></div>`;
   };
   const scr = show('home', `<div class="topbar"><button class="icon me" aria-label="${t(S.pid)}">${ANIMALS[S.pid]}</button><h1>${t('map_title')}</h1><span class="sp"></span>
       <span class="acorns"><i class="ac"></i>${sc.acornsTotal || 0}</span><button class="icon howbtn" aria-label="?">${ICON.help}</button><button class="icon mapbtn" aria-label="${t('map')}">${ICON.map}</button></div>
-    <div class="seasons"><div class="season spring"><h2>${t('season_spring')} <small>${t('times_2')}</small></h2><div class="path">${LEVEL_IDS.map(node).join('')}</div></div>
-      <div class="later">${['summer', 'autumn', 'winter'].map((s) => `<div class="season off s-${s}"><span>${t('season_later')}</span></div>`).join('')}</div></div>
+    <div class="worlds">${WORLD_IDS.map(card).join('')}</div>
     <button class="icon grownup corner" aria-label="${tp('grown_ups')}">${ICON.grownup}</button>`);
+  const curEl = $('.world.cur', scr); if (curEl) requestAnimationFrame(() => { const wr = $('.worlds', scr); wr.scrollLeft = Math.max(0, curEl.offsetLeft - 12); });
   for (const b of $$('.node.open', scr)) b.addEventListener('click', () => { tapSound(); levelStart(b.dataset.l); });
   for (const b of $$('.node.locked', scr)) b.addEventListener('click', () => { A.play('squeak'); b.classList.remove('nope'); void b.offsetWidth; b.classList.add('nope'); });
   const key = (e) => { if (S.screen !== 'home') return removeEventListener('keydown', key); if (['Enter', 'Space'].includes(e.code)) { e.preventDefault(); removeEventListener('keydown', key); const open = sc.unlocked.filter((x) => !(pd.levels[x] && pd.levels[x].medal)); levelStart(open[0] || sc.unlocked[sc.unlocked.length - 1]); } };
@@ -126,10 +134,9 @@ export function goHome(autoLevel) {
 export async function levelStart(id) {
   const pd = S.pd, r = pd.levels[id] || {};
   await loadLevel(id);
-  const T = targets(id), boss = id === 'spring-boss', rr = id === 'x2-RR';
-  const idx = LEVEL_IDS.indexOf(id);
-  const scr = show('lstart', `<div class="card lst"><p class="small">${t('season_spring')} · ${t('times_2')}</p><h1>${boss ? t('boss_name') : rr ? t('review_road') : t('level_n', { n: idx + 1 })}</h1><h2>${t('lv_' + id)}</h2>
-    ${boss ? `<p>${t('boss_hint')}</p>` : rr ? `<p>${t('rr_hint')}</p>` : ''}
+  const T = targets(id), boss = isBoss(id), wd = worldOf(id), tb = tableOf(id);
+  const scr = show('lstart', `<div class="card lst"><p class="small">${t('world_' + wd)} · ${tb ? t('times_t', { t: tb }) : t('times_all')}</p><h1>${boss ? t('boss_name') : t('level_n', { n: levelNo(id) })}</h1><h2>${t('lv_' + id)}</h2>
+    ${boss ? `<p>${t('boss_hint')}</p>` : ''}
     ${!boss && r.plays ? `<div class="targets"><span class="md m3"></span>${t('gold_target', { t: fmtTarget(T.gold) })}<span class="md m2"></span>${t('silver_target', { t: fmtTarget(T.silver) })}</div><p class="small">${t('best')}: ${r.bestSteps ? fmtTime(r.bestSteps) : '-'}</p>` : !boss ? `<p class="small">${t('first_play')}</p>` : ''}
     <div class="row"><button class="btn alt backb">${t('back')}</button><button class="btn go huge play">${ICON.play} ${t('play')}</button></div></div>`);
   const go = () => { removeEventListener('keydown', key); tapSound(); run(id); };
@@ -243,14 +250,14 @@ export async function parentPage(pid, back) {
   const secs = Object.entries(play).filter(([day]) => day >= mon && day <= d).reduce((s, [, v]) => s + v, 0) + (pid === S.pid ? S.unsaved || 0 : 0);
   const sc = pd.progress.scroller, lastRun = (pd.history || []).filter((h) => h.level).slice(-1)[0];
   const where = lastRun ? tp('last_run', { name: t('lv_' + lastRun.level), r: lastRun.right, w: lastRun.notYet }) : tp('no_runs');
-  const lvRows = LEVEL_IDS.filter((id) => pd.levels[id]).map((id) => { const r = pd.levels[id]; return `<li>${esc(tp('level_row', { name: t('lv_' + id), best: r.bestSteps ? fmtTime(r.bestSteps) : '-', medal: tp('medal_' + (r.medal || 0)), plays: r.plays || 0 }))}</li>`; }).join('');
+  const lvRows = CHAIN.filter((id) => pd.levels[id]).map((id) => { const r = pd.levels[id]; return `<li>${esc(tp('level_row', { name: t('lv_' + id), best: r.bestSteps ? fmtTime(r.bestSteps) : '-', medal: tp('medal_' + (r.medal || 0)), plays: r.plays || 0 }))}</li>`; }).join('');
   const tricky = trickiest(pd, d);
   let idea = tricky.length ? ideaFor(tricky[0].id) : null;
   if (!idea) { const learn = pd.attempts.slice().reverse().find((a) => pd.facts[a.factId] && pd.facts[a.factId].box <= 2); idea = learn ? ideaFor(learn.factId) : [tp('no_idea')]; }
   const tabs = CONFIG.PLAYERS.map((p) => `<button class="tab ${p === pid ? 'on' : ''}" data-p="${p}" aria-label="${t(p)}">${ANIMALS[p]}</button>`).join('');
   const scr = show('parent', `<div class="topbar"><button class="icon backb" aria-label="${tp('back')}">${ICON.back}</button><h1>${tp('parent_page')}</h1></div>
     <div class="ptext"><div class="tabs"><span>${tp('player')}</span>${tabs}</div>
-    <p>${esc(where)}</p><h3>${tp('levels')}</h3>${lvRows ? `<ul>${lvRows}</ul>` : `<p>${tp('no_levels')}</p>`}${(sc.reviewList || []).length ? `<p>${esc(tp('review_list', { list: sc.reviewList.map((id) => { const [a, b] = parseFact(id); return a === 2 ? `${a} x ${b}` : `${b} x ${a}`; }).join(', ') }))}</p>` : ''}<p>${tp('week', { n: Math.round(secs / 60) })}</p>
+    <p>${esc(where)}</p><h3>${tp('levels')}</h3>${lvRows ? `<ul>${lvRows}</ul>` : `<p>${tp('no_levels')}</p>`}${Object.values(sc.l1Missed || {}).flat().length ? `<p>${esc(tp('missed_list', { list: Object.values(sc.l1Missed).flat().map((id) => { const [a, b] = parseFact(id); return `${a} x ${b}`; }).join(', ') }))}</p>` : ''}<p>${tp('week', { n: Math.round(secs / 60) })}</p>
     <h3>${tp('map')}</h3><div class="minimap">${mapGrid(pd, { readOnly: true })}</div>
     <h3>${tp('tricky')}</h3>${tricky.length ? `<ol>${tricky.map((x) => { const [a, b] = parseFact(x.id); return `<li>${a} x ${b} - ${esc(mixText(x))}</li>`; }).join('')}</ol>` : `<p>${tp('no_tricky')}</p>`}
     ${idea.map((l) => `<p class="idea">${esc(l)}</p>`).join('')}

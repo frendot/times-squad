@@ -7,13 +7,13 @@ import * as store from './store.js';
 import * as input from './input.js';
 import * as SIM from './sim.js';
 import { draw, effects, resetView, VW, VH, iconCanvas, foxCanvas } from './render.js';
-import { makeCtx, QUESTIONS } from './questions.js';
-import { nextLevel } from './player.js';
+import { makeCtx, QUESTIONS, recordLevel, tableFor, strategyFor } from './questions.js';
+import { nextLevel, isBoss, fileOf, worldOf } from './levels.js';
 import { parseFact } from './facts.js';
 
 const levels = {};
 export async function loadLevel(id) {
-  if (!levels[id]) { const r = await fetch(new URL(`../levels/${id}.json`, import.meta.url)); levels[id] = await r.json(); }
+  if (!levels[id]) { const r = await fetch(new URL(`../levels/${fileOf(id)}.json`, import.meta.url)); levels[id] = { ...(await r.json()), world: worldOf(id) }; }
   return levels[id];
 }
 export const fmtTime = (steps) => { const s = steps / 60; const m = Math.floor(s / 60), r = s - m * 60; return `${m}:${r.toFixed(1).padStart(4, '0')}`; };
@@ -30,7 +30,7 @@ const SOUNDS = { jump: 'jump', jump_big: 'jump_big', land: 'land', mushroom: 'mu
 export async function playLevel(levelId, { exit, again }) {
   const lvl = await loadLevel(levelId);
   const pd = S.pd, d = today();
-  const rec = pd.levels[levelId] || (pd.levels[levelId] = { bestSteps: null, medal: 0, brainStar: false, plays: 0, ghostOn: true, finishedOn: null });
+  const rec = pd.levels[levelId] || (pd.levels[levelId] = { bestSteps: null, medal: 0, brainStar: false, plays: 0, ghostOn: true, finishedOn: null, v4: true });
   const resume = pd.run && pd.run.kind === 'level' && pd.run.levelId === levelId && pd.run.playCount === rec.plays ? pd.run : null;
   const ctx = makeCtx(pd, levelId, d, rec.plays);
   const sc = pd.progress.scroller;
@@ -123,7 +123,7 @@ function saveAnswer() {
 }
 function saveCheckpoint() {
   const w = G.w, pd = S.pd;
-  pd.run = { kind: 'level', levelId: G.levelId, playCount: G.rec.plays, timer: w.timer, acorns: w.acorns, answers: w.answers, done: w.bays.map((b, i) => (b.state === 'done' ? i : -1)).filter((i) => i >= 0), day: today() };
+  pd.run = { kind: 'level', v4: true, levelId: G.levelId, playCount: G.rec.plays, timer: w.timer, acorns: w.acorns, answers: w.answers, done: w.bays.map((b, i) => (b.state === 'done' ? i : -1)).filter((i) => i >= 0), day: today() };
   store.saveRun(pd);
 }
 function hud() {
@@ -147,13 +147,22 @@ function toast(text) {
 // ---- the "Almost!" card (spec 5.6): the fact, a dot array, and (on a repeat miss) a strategy line ----
 function showCard(card) {
   const q = card.q, layer = $('.cardlayer', G.scr);
-  const [x, y] = parseFact(q.factId), k = x === 2 ? y : x;
+  const st = strategyFor(tableFor(G.levelId, q.factId), q.factId);
   const node = el(`<div class="almost"><h2>${t('almost')}</h2><p class="cf">${t('card_fact', { a: q.a, b: q.b, c: q.c })}</p><div class="cdots"></div>
-    <p class="picked">${t('you_picked', { v: card.chosen })}</p>${card.repeat ? `<p class="strat">${t('mp_double', { n: k, c: 2 * k })}</p>` : ''}</div>`);
+    <p class="picked">${t('you_picked', { v: card.chosen })}</p>${card.repeat ? `<p class="strat">${strategyText(st)}</p>` : ''}</div>`);
   $('.cdots', node).appendChild(dots(q.a, q.b, { max: 260, maxH: 110 }));
   layer.innerHTML = ''; layer.appendChild(node); layer.classList.add('show');
 }
 function hideCard() { const layer = $('.cardlayer', G.scr); layer.classList.remove('show'); layer.innerHTML = ''; }
+// One short strategy line per table (simple English, numbers as digits).
+export function strategyText({ t: tb, k, c }) {
+  if (tb === 2) return t('mp_double', { n: k, c });
+  if (tb === 10) return t('mp_ten', { n: k, c });
+  if (tb === 5) return t('mp_five', { n: k, c, d: k * 10 });
+  if (tb === 4) return t('mp_four', { n: k, d: 2 * k, c });
+  if (tb === 9) return t('mp_nine', { n: k, d: 10 * k, c });
+  return t('mp_count', { t: tb, n: k, c });
+}
 // ---- pause (S9) ----
 function openPause() {
   if (!G || G.over) return;
@@ -181,7 +190,7 @@ function quit() { if (!G) return; G.over = true; G.doneDrawing = true; input.unb
 
 // ---- results (S10) ----
 function medalFor(levelId, steps, rec) {
-  const T = targets(levelId), s = steps / 60;
+  const T = targets(levelId), s = steps / 60; // targets come from the measured expert times (experts.js)
   let m = 1; if (s <= T.silver) m = 2; if (s <= T.gold) m = 3;
   const isBest = rec.bestSteps === null || steps < rec.bestSteps;
   if (m === 3 && rec.medal >= 3 && isBest && rec.bestSteps !== null) m = 4; // Fox Medal: gold already earned, then a new best inside gold
@@ -200,10 +209,7 @@ async function finish() {
   const sc = pd.progress.scroller;
   sc.acornsTotal = (sc.acornsTotal || 0) + w.acorns;
   const nx = nextLevel(levelId); if (nx && !sc.unlocked.includes(nx)) sc.unlocked.push(nx);
-  const rl = new Set(sc.reviewList || []);
-  for (const id of Gs.ctx.reviewAdd) rl.add(id);
-  if (levelId === 'x2-RR') for (const a of w.answers) if (a.first) rl.delete(a.q);
-  sc.reviewList = [...rl];
+  recordLevel(sc, levelId, w.answers); // L1 misses come back in L2
   pd.run = null; store.saveRun(pd);
   let ghost = null;
   if (isBest && !Gs.resume) { ghost = { samples: Gs.samples, steps }; pd.ghosts[levelId] = ghost; }
@@ -228,7 +234,7 @@ function results({ levelId, steps, m, isBest, oldBest, brain, acorns, missed, fi
     ${missed.length ? `<div class="lookagain"><h3>${t('look_again')}</h3><div class="las"></div></div>` : ''}
     <div class="row"><button class="btn alt again">${t('replay')}</button>${nx ? `<button class="btn go nextb">${t('next_level')}</button>` : ''}<button class="btn alt tomap">${t('to_map')}</button></div></div></div>`);
   const las = $('.las', scr);
-  if (las) for (const id of missed.slice(0, 3)) { const [a, b] = parseFact(id); const [x, y] = a === 2 ? [a, b] : [b, a]; const n = el(`<div class="la"><b>${t('fact', { a: x, b: y, c: x * y })}</b></div>`); n.appendChild(dots(x, y, { max: 140, maxH: 40 })); las.appendChild(n); }
+  if (las) for (const id of missed.slice(0, 3)) { const [a, b] = parseFact(id); const tb = tableFor(levelId, id); const [x, y] = a === tb ? [a, b] : [b, a]; const n = el(`<div class="la"><b>${t('fact', { a: x, b: y, c: x * y })}</b></div>`); n.appendChild(dots(x, y, { max: 140, maxH: 40 })); las.appendChild(n); }
   $('.again', scr).addEventListener('click', () => { A.play('ui_tap'); again(); });
   $('.tomap', scr).addEventListener('click', () => { A.play('ui_tap'); exit(); });
   const nb = $('.nextb', scr); if (nb) nb.addEventListener('click', () => { A.play('ui_tap'); exit(nx); });
@@ -239,7 +245,8 @@ async function bossWin() {
   const Gs = G, pd = S.pd, rec = Gs.rec, d = today();
   input.unbind(); removeEventListener('resize', Gs.fit);
   rec.plays++; rec.medal = Math.max(rec.medal, 1); rec.finishedOn = d;
-  pd.run = null; store.saveRun(pd);
+  const sc = pd.progress.scroller, nx = nextLevel(Gs.levelId); if (nx && !sc.unlocked.includes(nx)) sc.unlocked.push(nx);
+  pd.run = null; store.saveRun(pd); store.saveProgress(pd);
   await store.saveLevel(pd, Gs.levelId);
   G = null;
   A.play('cheer');

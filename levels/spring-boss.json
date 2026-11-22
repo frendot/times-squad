@@ -1,1 +1,0 @@
-{"id":"spring-boss","kind":"boss","name":"Giant Broccoli","start":3,"ground":[[-1,21,0]],"solids":[],"walls":[0,14.6],"oneway":[],"movers":[],"mushrooms":[],"ledges":[[1,5,5.5]],"acorns":[[2,6.2],[3,6.2],[4,6.2]],"monsters":[],"bays":[],"bossPlats":[3,8,12.4],"bossX":16.5,"bossHead":6.4,"width":20}
