@@ -4,7 +4,7 @@ import { CONFIG } from './config.js';
 import { factId, parseFact } from './facts.js';
 import { candidates } from './gen.js';
 import { rngOn, seedFrom, weighted } from './rng.js';
-import { newFact, introduce, firstTry, daysBetween } from './learn.js';
+import { newFact, introduce, firstTry, daysBetween, isDue } from './learn.js';
 import { ORDER, tableOf, isBoss, levelIndex, levelNo } from './levels.js';
 
 // v0.4: each table x2..x10 has its own facts (t x 1 .. t x 10); the Rainbow stage mixes all of them.
@@ -39,9 +39,37 @@ function noRepeats(plan) {
 // The plan. L1: a sure start, then weak first. L2: the facts this player missed in L1 come back (spaced out),
 // then facts L1 did not ask, then weak first. Rainbow: all tables, weak first, with missed facts mixed in. Boss: the weakest five.
 const strongest = (pd, ids, rng) => { const top = Math.max(...ids.map((id) => fact(pd, id).box)); const best = ids.filter((id) => fact(pd, id).box === top); return best[Math.floor(rng() * best.length)]; };
+// v0.5a review: facts from tables earlier in the order (k >= 2), met before. Due ones first (Leitner dueOn), then the
+// lowest box, then most recent misses; ties seeded. Returns up to `count` ids not in `skip`.
+export function reviewFacts(pd, levelId, today, rng, count, skip = []) {
+  const t = tableOf(levelId); if (!t || isBoss(levelId)) return [];
+  const at = ORDER.indexOf(t); if (at < CONFIG.REVIEW_FROM) return [];
+  const own = new Set(tableFacts(t));
+  const pool = [...new Set(ORDER.slice(0, at).flatMap((tt) => [2, 3, 4, 5, 6, 7, 8, 9, 10].map((k) => factId(tt, k))))].filter((id) => !own.has(id) && !skip.includes(id));
+  const met = pool.filter((id) => fact(pd, id).box >= 1);
+  const tie = new Map(pool.map((id) => [id, rng()]));
+  const key = (id) => [isDue(fact(pd, id), today) ? 0 : 1, fact(pd, id).box, -recentMisses(pd, id, today), tie.get(id)];
+  const cmp = (p, q) => { const a = key(p), b = key(q); for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i] - b[i]; return 0; };
+  return (met.length ? met : pool).slice().sort(cmp).slice(0, count);
+}
+export const REVIEW_SLOTS = { 1: [4], 2: [4, 2] }; // L1: 1 review fact (question 5); L2: 1-2 (questions 5 and 3, if 3 is not a missed fact)
 export function makePlan(pd, levelId, today, rng) {
-  const t = tableOf(levelId), ids = factsFor(levelId), n = questionsFor(levelId);
+  const plan0 = makePlanCore(pd, levelId, today, rng);
+  const t = tableOf(levelId), lv = levelNo(levelId);
+  if (!t || isBoss(levelId) || !REVIEW_SLOTS[lv]) return plan0;
+  const keep = new Set(plan0.missIds || []), want = lv === 2 && keep.size >= 4 ? 1 : REVIEW_SLOTS[lv].length;
+  const slots = [...REVIEW_SLOTS[lv], 5, 3, 1].filter((k, j, arr) => arr.indexOf(k) === j && k < plan0.length && !keep.has(plan0[k])).slice(0, want);
+  const rev = reviewFacts(pd, levelId, today, rng, slots.length, plan0);
+  const plan = plan0.slice();
+  rev.forEach((id, j) => { if (slots[j] < plan.length) plan[slots[j]] = id; });
+  return noRepeats(plan);
+}
+function makePlanCore(pd, levelId, today, rng) {
+  const t = tableOf(levelId), n = questionsFor(levelId);
+  // v0.5a: t x 1 stops taking a slot once it was answered right on the first try (unless it is a level 1 miss)
   const sc = (pd.progress && pd.progress.scroller) || {};
+  const l1m = t ? (sc.l1Missed || {})[t] || [] : [];
+  const ids = factsFor(levelId).filter((id) => !(t && !isBoss(levelId) && id === factId(t, 1) && fact(pd, id).firstTryRights > 0 && !l1m.includes(id)));
   const missedL1 = (t ? (sc.l1Missed || {})[t] || [] : Object.values(sc.l1Missed || {}).flat()).filter((id) => ids.includes(id));
   if (isBoss(levelId)) {
     const pri = new Map(ids.map((id) => [id, (missedL1.includes(id) ? 4 : 0) + Math.min(3, recentMisses(pd, id, today)) + (fact(pd, id).box <= 1 ? 2 : 0) + rng()]));
@@ -60,7 +88,7 @@ export function makePlan(pd, levelId, today, rng) {
     const miss = shuffle(rng, missedL1.filter((id) => id !== q1));
     const asked = new Set((sc.l1Asked || {})[t] || []);
     const notAsked = weak.filter((id) => !asked.has(id) && !used.has(id) && !miss.includes(id));
-    const slots = [1, 3, 5, 2, 4].slice(0, Math.min(miss.length, n - 1));
+    const slots = [1, 3, 5, 2].slice(0, Math.min(miss.length, n - 2)); plan.missSlots = slots; plan.missIds = [...miss]; // slot 4 stays free for a review fact
     const filler = [...notAsked, ...weak.filter((id) => !notAsked.includes(id) && !miss.includes(id) && id !== q1)];
     for (let i = 1; i < n; i++) {
       if (slots.includes(i) && miss.length) { const id = miss.shift(); plan.push(id); used.add(id); continue; }
@@ -109,6 +137,7 @@ function rainbowRamp(pd, ids, n, missedL1, weak, rng) {
 export function recordLevel(sc, levelId, answers) {
   const t = tableOf(levelId); if (!t || isBoss(levelId)) return sc;
   sc.l1Missed = sc.l1Missed || {}; sc.l1Asked = sc.l1Asked || {};
+  answers = answers.filter((a) => tableFacts(t).includes(a.q)); // v0.5a: review facts from other tables are not this table's misses
   const asked = [...new Set(answers.map((a) => a.q))];
   const missed = [...new Set(answers.filter((a) => !a.first).map((a) => a.q))];
   const rightFirst = new Set(answers.filter((a) => a.first).map((a) => a.q));
@@ -167,6 +196,30 @@ export function positionBag(rng, levelId, n) {
 
 // The table a fact is shown under: the level's table, or (Rainbow) the bigger factor.
 export const tableFor = (levelId, id) => { const [a, b] = parseFact(id); const t = tableOf(levelId); return t && (a === t || b === t) ? t : Math.max(a, b); };
+// v0.5a strategy card (academic review): a derived fact from an easier table, split into dot blocks, plus "turn it around".
+// tb = the table this fact is practised in, k = the other number. parts = dot blocks [rows, cols]; minus = rows shown faded.
+const SPLIT = { 3: [2, 1], 4: [2, 2], 6: [5, 1], 7: [5, 2], 8: [4, 4] };
+export function strategyCard(tb, k) {
+  const c = tb * k;
+  const turn = k > 1 && k !== tb && ([2, 5, 10].includes(k) || (ORDER.includes(k) && ORDER.indexOf(k) < ORDER.indexOf(tb)));
+  let card;
+  if (k === 1) card = { kind: 'one', parts: [[1, tb]] };
+  else if (tb === 2) card = { kind: 'double', parts: [[1, k], [1, k]], sum: [k, k] };
+  else if (tb === 10) card = { kind: 'ten', parts: [[10, k]] };
+  else if (tb === 5) card = { kind: 'half', parts: [[5, k]], d: 10 * k };
+  else if (tb === 9) card = { kind: 'nine', parts: [[10, k]], minus: 1, d: 10 * k };
+  else if (SPLIT[tb]) { const [p, q] = SPLIT[tb]; card = { kind: 'split', parts: [[p, k], [q, k]], pq: [p, q], sum: [p * k, q * k] }; }
+  else card = { kind: 'count', parts: [[tb, k]] };
+  return { t: tb, k, c, turn, ...card };
+}
+// The table to explain a fact with: the level's table, or for a review fact the easier factor (earlier in the order).
+export function cardTable(levelId, id) {
+  const [a, b] = parseFact(id), t = tableOf(levelId);
+  if (t && (a === t || b === t)) return t;
+  const ia = ORDER.indexOf(a), ib = ORDER.indexOf(b);
+  if (ia < 0) return b; if (ib < 0) return a;
+  return ia <= ib ? a : b;
+}
 export const strategyFor = (t, id) => { const [a, b] = parseFact(id); const k = a === t ? b : a; return { t, k, c: t * k }; };
 
 // The context the simulation talks to. pd is changed in place (learning), and saved by the game.
@@ -204,8 +257,13 @@ export function makeCtx(pd, levelId, today, playCount) {
       const choices = [null, null, null]; choices[pos] = c;
       const rest = [0, 1, 2].filter((p) => p !== pos); choices[rest[0]] = ds[0].value; choices[rest[1]] = ds[1].value;
       prev = c;
+      // v0.5a assist: after repeated misses (helper mode, or a fact missed here that was missed before) only 2 platforms
+      // stay: the closer lure goes away, and the sign shows the dots.
+      const assist = !!(f.helper || (missedHere.has(id) && (f.misses || 0) >= 2));
+      const drop = assist ? rest.slice().sort((p, q) => Math.abs(choices[p] - c) - Math.abs(choices[q] - c) || p - q)[0] : -1;
+      const review = !!(tableOf(levelId) && !isBoss(levelId) && !tableFacts(tableOf(levelId)).includes(id));
       return { factId: id, a, b, c, choices, correctIndex: pos, distractors: ds.map((d) => ({ value: d.value, type: d.type })),
-        dots: f.box === 0, askStep: w ? w.steps : 0, i };
+        dots: f.box === 0 || assist, assist, drop, review, askStep: w ? w.steps : 0, i };
     },
     answer(q, idx, { first, w, misses }) {
       const right = idx === q.correctIndex;

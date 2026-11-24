@@ -1,6 +1,646 @@
 {
  "sprites": [
   {
+   "file": "bad_bee_away.webp",
+   "key": "bad_bee_away",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_bee_bopped.webp",
+   "key": "bad_bee_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_bee_move1.webp",
+   "key": "bad_bee_move1",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_bee_move2.webp",
+   "key": "bad_bee_move2",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_carrot_away.webp",
+   "key": "bad_carrot_away",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_carrot_bopped.webp",
+   "key": "bad_carrot_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_carrot_move1.webp",
+   "key": "bad_carrot_move1",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_carrot_move2.webp",
+   "key": "bad_carrot_move2",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_cheese_away.webp",
+   "key": "bad_cheese_away",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_cheese_bopped.webp",
+   "key": "bad_cheese_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_cheese_move1.webp",
+   "key": "bad_cheese_move1",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_cheese_move2.webp",
+   "key": "bad_cheese_move2",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_cloud_away.webp",
+   "key": "bad_cloud_away",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_cloud_bopped.webp",
+   "key": "bad_cloud_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_cloud_move1.webp",
+   "key": "bad_cloud_move1",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_cloud_move2.webp",
+   "key": "bad_cloud_move2",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_crab_away.webp",
+   "key": "bad_crab_away",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_crab_bopped.webp",
+   "key": "bad_crab_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_crab_move1.webp",
+   "key": "bad_crab_move1",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_crab_move2.webp",
+   "key": "bad_crab_move2",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_jelly_away.webp",
+   "key": "bad_jelly_away",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_jelly_bopped.webp",
+   "key": "bad_jelly_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_jelly_move1.webp",
+   "key": "bad_jelly_move1",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_jelly_move2.webp",
+   "key": "bad_jelly_move2",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_lizard_away.webp",
+   "key": "bad_lizard_away",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_lizard_bopped.webp",
+   "key": "bad_lizard_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_lizard_move1.webp",
+   "key": "bad_lizard_move1",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_lizard_move2.webp",
+   "key": "bad_lizard_move2",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_moon_away.webp",
+   "key": "bad_moon_away",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_moon_bopped.webp",
+   "key": "bad_moon_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_moon_move1.webp",
+   "key": "bad_moon_move1",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_moon_move2.webp",
+   "key": "bad_moon_move2",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_mouse_away.webp",
+   "key": "bad_mouse_away",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_mouse_bopped.webp",
+   "key": "bad_mouse_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_mouse_move1.webp",
+   "key": "bad_mouse_move1",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_mouse_move2.webp",
+   "key": "bad_mouse_move2",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_paintblob_away.webp",
+   "key": "bad_paintblob_away",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_paintblob_bopped.webp",
+   "key": "bad_paintblob_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_paintblob_move1.webp",
+   "key": "bad_paintblob_move1",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_paintblob_move2.webp",
+   "key": "bad_paintblob_move2",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_penguin_away.webp",
+   "key": "bad_penguin_away",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_penguin_bopped.webp",
+   "key": "bad_penguin_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_penguin_move1.webp",
+   "key": "bad_penguin_move1",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_penguin_move2.webp",
+   "key": "bad_penguin_move2",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_pinecone_away.webp",
+   "key": "bad_pinecone_away",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_pinecone_bopped.webp",
+   "key": "bad_pinecone_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_pinecone_move1.webp",
+   "key": "bad_pinecone_move1",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_pinecone_move2.webp",
+   "key": "bad_pinecone_move2",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_raindrop_away.webp",
+   "key": "bad_raindrop_away",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_raindrop_bopped.webp",
+   "key": "bad_raindrop_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_raindrop_move1.webp",
+   "key": "bad_raindrop_move1",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_raindrop_move2.webp",
+   "key": "bad_raindrop_move2",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_ringrock_away.webp",
+   "key": "bad_ringrock_away",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_ringrock_bopped.webp",
+   "key": "bad_ringrock_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_ringrock_move1.webp",
+   "key": "bad_ringrock_move1",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_ringrock_move2.webp",
+   "key": "bad_ringrock_move2",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_snowball_away.webp",
+   "key": "bad_snowball_away",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_snowball_bopped.webp",
+   "key": "bad_snowball_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_snowball_move1.webp",
+   "key": "bad_snowball_move1",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_snowball_move2.webp",
+   "key": "bad_snowball_move2",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_sparklestar_away.webp",
+   "key": "bad_sparklestar_away",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_sparklestar_bopped.webp",
+   "key": "bad_sparklestar_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_sparklestar_move1.webp",
+   "key": "bad_sparklestar_move1",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_sparklestar_move2.webp",
+   "key": "bad_sparklestar_move2",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_starfish_away.webp",
+   "key": "bad_starfish_away",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_starfish_bopped.webp",
+   "key": "bad_starfish_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_starfish_move1.webp",
+   "key": "bad_starfish_move1",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_starfish_move2.webp",
+   "key": "bad_starfish_move2",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_storm_away.webp",
+   "key": "bad_storm_away",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_storm_bopped.webp",
+   "key": "bad_storm_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_storm_move1.webp",
+   "key": "bad_storm_move1",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_storm_move2.webp",
+   "key": "bad_storm_move2",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_tumbleweed_away.webp",
+   "key": "bad_tumbleweed_away",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_tumbleweed_bopped.webp",
+   "key": "bad_tumbleweed_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_tumbleweed_move1.webp",
+   "key": "bad_tumbleweed_move1",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_tumbleweed_move2.webp",
+   "key": "bad_tumbleweed_move2",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_ufo_away.webp",
+   "key": "bad_ufo_away",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_ufo_bopped.webp",
+   "key": "bad_ufo_bopped",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_ufo_move1.webp",
+   "key": "bad_ufo_move1",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "bad_ufo_move2.webp",
+   "key": "bad_ufo_move2",
+   "w": 0,
+   "h": 0,
+   "anchor": null,
+   "licence": "own (AI-generated for this project)"
+  },
+  {
    "file": "bg_rb_far.webp",
    "key": "bg_rb_far",
    "w": 0,
@@ -734,6 +1374,127 @@
    "anchor": [
     0.5,
     0.5
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "part_rb.webp",
+   "key": "part_rb",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    0.5
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "part_x10.webp",
+   "key": "part_x10",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    0.5
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "part_x2.webp",
+   "key": "part_x2",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    0.5
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "part_x3.webp",
+   "key": "part_x3",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    0.5
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "part_x4.webp",
+   "key": "part_x4",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    0.5
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "part_x5.webp",
+   "key": "part_x5",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    0.5
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "part_x6.webp",
+   "key": "part_x6",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    0.5
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "part_x7.webp",
+   "key": "part_x7",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    0.5
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "part_x8.webp",
+   "key": "part_x8",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    0.5
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "part_x9.webp",
+   "key": "part_x9",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    0.5
+   ],
+   "licence": "own (AI-generated for this project)"
+  },
+  {
+   "file": "shuttle_full.webp",
+   "key": "shuttle_full",
+   "w": 0,
+   "h": 0,
+   "anchor": [
+    0.5,
+    1
    ],
    "licence": "own (AI-generated for this project)"
   },

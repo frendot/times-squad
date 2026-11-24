@@ -1,15 +1,19 @@
 // Drawing the side-scroller (spec 10): 960 x 540 logical view, letterboxed; 1 T = 48 px. Numbers are always drawn as text.
 import { CONFIG as C } from './config.js';
 import { art } from './artpack.js';
-import { drawFox, runPose, poseOf, blend, rigReady } from './puppet.js';
+import { drawFox, runPose, poseOf, blend, rigReady, rigKeys } from './puppet.js';
 import { onewaysAt, bossPlats } from './sim.js';
 import { WORLDS, BOSSES } from './levels.js';
+import { fx } from './ui.js';
 
 export const VW = 960, VH = 540, T = 48;
 const GY = VH - 96; // screen y of the ground top when the camera is low
 let P = WORLDS.x2; // the current world's ground and platform colours
 const R = { bossHit: 0, paradeT: 0, cam: { x: 0, y: 0 }, phase: 0, idleT: 0, parts: [], blinkT: 3, t: 0, poseK: 0, last: null, fx: [] };
-export function resetView(w) { R.paradeOn = false; R.paradeDone = false; R.paradeT = 0; R.bossHit = 0; R.cam.x = Math.max(0, w.fox.x - 7); R.cam.y = 0; R.parts = []; R.fx = []; R.phase = 0; }
+// v0.5a: Calm mode view flags, the right-answer shake and platform flash, and the focus moment (dim + pulse) at each sign
+const V = { shake: true, fewFx: false };
+export function setView(o) { Object.assign(V, o); }
+export function resetView(w) { R.shakeT = 0; R.flashT = 0; R.pulseT = 0; R.dim = 0; R.paradeOn = false; R.paradeDone = false; R.paradeT = 0; R.bossHit = 0; R.cam.x = Math.max(0, w.fox.x - 7); R.cam.y = 0; R.parts = []; R.fx = []; R.phase = 0; }
 const sx = (x) => (x - R.cam.x) * T, sy = (y) => GY - (y - R.cam.y) * T;
 const reduced = () => !!(self.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 
@@ -56,6 +60,14 @@ function log(g, x0, x1, top, bot) {
   g.strokeStyle = '#5e3a1a'; g.lineWidth = 2; g.beginPath(); g.moveTo(a + 10, y + 12); g.lineTo(b - 30, y + 12); g.stroke();
   g.fillStyle = '#7cc251'; g.beginPath(); g.ellipse(a + (b - a) * 0.35, y + 2, 14, 6, 0, 0, 7); g.fill();
 }
+// v0.5b2 low branch (slide under it): a leafy branch hanging on 2 vines from above, so it reads as "duck under me"
+function lowBranch(g, x0, x1, top, bot) {
+  const a = sx(x0), b = sx(x1), y = sy(top), yb = sy(bot);
+  g.strokeStyle = '#3f7a2a'; g.lineWidth = 4; for (const x of [a + 10, b - 10]) { g.beginPath(); g.moveTo(x, 0); g.quadraticCurveTo(x + 6, y / 2, x, y + 4); g.stroke(); }
+  log(g, x0, x1, top, bot);
+  g.fillStyle = '#5cbf4a'; g.strokeStyle = '#24531d'; g.lineWidth = 2;
+  for (let i = 0; i < 4; i++) { const lx = a + (b - a) * (0.15 + i * 0.24); g.beginPath(); g.ellipse(lx, yb + 6, 7, 11, i % 2 ? 0.4 : -0.4, 0, 7); g.fill(); g.stroke(); }
+}
 function plank(g, x0, x1, y) { const a = sx(x0), b = sx(x1), yy = sy(y); rr(g, a, yy - 2, b - a, 16, 6); outlineFill(g, P.plank); g.strokeStyle = P.plank2; g.lineWidth = 2; for (let x = a + 24; x < b - 8; x += 24) { g.beginPath(); g.moveTo(x, yy); g.lineTo(x, yy + 12); g.stroke(); } }
 function leaf(g, x0, x1, y) { const a = sx(x0), b = sx(x1), yy = sy(y); g.beginPath(); g.moveTo(a - 6, yy + 4); g.quadraticCurveTo((a + b) / 2, yy - 14, b + 8, yy + 2); g.quadraticCurveTo((a + b) / 2, yy + 22, a - 6, yy + 4); outlineFill(g, P.leaf, '#24531d'); g.strokeStyle = 'rgba(0,0,0,0.25)'; g.lineWidth = 2; g.beginPath(); g.moveTo(a, yy + 5); g.lineTo(b, yy + 3); g.stroke(); }
 function mushroom(g, x) { const X = sx(x), Y = sy(0); rr(g, X - 9, Y - 20, 18, 22, 6); outlineFill(g, '#fff1dc'); g.beginPath(); g.ellipse(X, Y - 22, 30, 16, 0, Math.PI, 0); g.closePath(); outlineFill(g, '#e8433b'); g.fillStyle = '#fff'; for (const [dx, dy] of [[-14, -28], [2, -33], [16, -26]]) { g.beginPath(); g.arc(X + dx, Y + dy, 4, 0, 7); g.fill(); } }
@@ -83,7 +95,7 @@ function sign(g, b) {
   const wd = 170, ht = b.q && b.q.dots ? 120 : 70;
   rr(g, X - wd / 2, Y - 110 - ht, wd, ht, 12); outlineFill(g, '#f3d9a4', '#5a3a1e', 5);
   g.fillStyle = '#3a2116'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = 'bold 34px system-ui, sans-serif';
-  const txt = b.q ? `${b.q.a} x ${b.q.b}` : '?';
+  const txt = b.q ? fx(b.q.a, b.q.b) : '?';
   g.fillText(txt, X, Y - 110 - ht + 36);
   if (b.q && b.q.dots) dotsAt(g, b.q.a, b.q.b, X, Y - 110 - ht + 88, 140, 48);
 }
@@ -92,11 +104,13 @@ function dotsAt(g, rows, cols, cx, cy, maxW, maxH) {
   for (let i = 0; i < rows; i++) for (let j = 0; j < cols; j++) { g.beginPath(); g.arc(cx + (j - (cols - 1) / 2) * d, cy + (i - (rows - 1) / 2) * d, r, 0, 7); g.fillStyle = '#e8572a'; g.fill(); }
 }
 // Answer platform: a flat stone with the number as text.
-function numPlat(g, x0, y, value, { glow = false, ok = false, fade = 1 } = {}) {
+function numPlat(g, x0, y, value, { glow = false, ok = false, fade = 1, pulse = 0, flash = 0 } = {}) {
   const a = sx(x0), b = sx(x0 + C.PLAT_W), yy = sy(y);
   g.save(); g.globalAlpha *= fade;
+  if (pulse > 0) { const k = 1 + 0.12 * Math.sin(Math.PI * Math.min(1, pulse)); const mx = (a + b) / 2; g.translate(mx, yy); g.scale(k, k); g.translate(-mx, -yy); }
+  if (flash > 0) { g.shadowColor = '#ffffff'; g.shadowBlur = 40 * flash; }
   if (glow) { g.shadowColor = '#fff36b'; g.shadowBlur = 24; }
-  rr(g, a, yy - 4, b - a, 26, 10); outlineFill(g, ok ? '#9be07a' : '#e9e3d4', '#4a3a2a', 4);
+  rr(g, a, yy - 4, b - a, 26, 10); outlineFill(g, flash > 0.3 ? '#ffffff' : ok ? '#9be07a' : '#e9e3d4', '#4a3a2a', 4);
   g.shadowBlur = 0;
   // the number floats above the plate so Fox never covers it
   rr(g, (a + b) / 2 - 38, yy - 64, 76, 50, 14); outlineFill(g, glow ? '#fff7b0' : '#ffffff', '#4a3a2a', 4);
@@ -115,11 +129,39 @@ function curtain(g, b) {
   }
   g.fillStyle = '#6b4423'; g.fillRect(X - 6, top - 10, 36, 12);
 }
+// v0.5b2: 2 painted bad guys per world (art/bad_<name>_<pose>.webp): a 2-pose walk/fly cycle, a dizzy bopped pose, then a cartoon
+// exit in the bad guy's own style (fly off up, roll away, bounce away, spin away). Nobody is hurt: it is a poof, not a defeat.
+function badGuy(g, m, X, Y, bopped) {
+  const name = m.bad, mv = m.move || 'walk';
+  const pose = bopped ? (m.t < 0.45 ? 'bopped' : 'away') : (Math.floor(R.t * (mv === 'roll' ? 6 : 4) + m.id) % 2 ? 'move2' : 'move1');
+  const a = art(['bad', name, pose]) || art(['bad', name, 'move1']); if (!a) return false;
+  const base = mv === 'fly' ? 1.05 : mv === 'roll' ? 1.05 : 1.2;
+  let h = base * T, rot = 0, sxs = 1, sys = 1, alpha = 1, dx = 0, dy = 0;
+  if (!bopped) {
+    if (mv === 'roll') rot = Math.sin(R.t * 10 + m.id) * 0.08; // a rolling wobble (the faces stay upright)
+    else if (mv === 'hop' || mv === 'float') { const air = m.y > 0.05; sys = air ? 1.08 : 0.94 + Math.sin(R.t * 6 + m.id) * 0.03; sxs = air ? 0.93 : 1.05; }
+    else if (mv === 'fly') dy = 0;
+    else sys = 1 + Math.abs(Math.sin(R.t * 8 + m.id)) * 0.04;
+  } else {
+    const k = m.t; alpha = Math.max(0, 1 - Math.max(0, k - 0.45) / 1.05);
+    if (k < 0.45) { sys = 0.8 + 0.2 * Math.min(1, k / 0.2); sxs = 1.15; } // squash: the cartoon bop
+    else { const e = k - 0.45;
+      if (mv === 'fly') { dy = e * e * 6 * T; rot = Math.sin(e * 12) * 0.2; }
+      else if (mv === 'roll') { dx = e * 5 * T * m.dir; rot = e * 9 * m.dir; }
+      else if (mv === 'hop' || mv === 'float') { dy = Math.abs(Math.sin(e * 7)) * T * 1.2; }
+      else rot = e * 10 * m.dir; }
+  }
+  // flyers face their way; the cut sprites mostly face left, so flip when moving right
+  img(g, a, X + dx, Y - dy, h, { flip: m.dir > 0 && mv !== 'roll', rot, sxs, sys, alpha });
+  if (bopped && m.t < 0.6) { g.save(); g.globalAlpha = 1 - m.t / 0.6; g.fillStyle = '#ffffff'; for (let i = 0; i < 6; i++) { const an = i * 1.05 + m.t * 4; g.beginPath(); g.arc(X + Math.cos(an) * (14 + m.t * 60), Y - h * 0.5 + Math.sin(an) * (10 + m.t * 40), 7 * (1 - m.t), 0, 7); g.fill(); } g.restore(); }
+  return true;
+}
 function monster(g, m) {
   if (m.state === 'gone') return;
   const X = sx(m.x), Y = sy(m.y);
   if (X < -80 || X > VW + 80) return;
   const bopped = m.state === 'bopped';
+  if (m.bad && badGuy(g, m, X, Y, bopped)) return;
   if (m.type === 'pine') {
     const a = art(['monster', 'pinecone']); const h = 1.35 * T, bob = bopped ? 0 : Math.abs(Math.sin(R.t * 8 + m.id)) * 3;
     if (!img(g, a, X, Y - bob, h, { flip: m.dir > 0, rot: bopped ? m.t * 10 * m.dir : 0, alpha: bopped ? Math.max(0, 1 - m.t / 1.5) : 1 })) { g.beginPath(); g.ellipse(X, Y - 30, 22, 30, 0, 0, 7); outlineFill(g, '#8b5a2b'); }
@@ -127,6 +169,15 @@ function monster(g, m) {
     const a = art(['monster', 'frog']); const air = m.y > 0.05; const h = 1.2 * T;
     if (!img(g, a, X, Y, h, { flip: false, sys: air ? 1.1 : 0.92 + Math.sin(R.t * 6) * 0.03, sxs: air ? 0.9 : 1.06, rot: bopped ? m.t * 10 * m.dir : 0, alpha: bopped ? Math.max(0, 1 - m.t / 1.5) : 1 })) { g.beginPath(); g.ellipse(X, Y - 22, 28, 22, 0, 0, 7); outlineFill(g, '#5cbf4a'); }
   }
+}
+// v0.5b2: a shuttle part (the world's part type) floats with a soft glow; a part found before is drawn faint (it can be found again)
+function shuttlePart(g, p, w) {
+  const a = art(['part', w.lvl.world || 'x2']); const X = sx(p.x), Y = sy(p.y + Math.sin(R.t * 2.5 + p.x) * 0.12);
+  g.save(); g.globalAlpha *= p.had ? 0.45 : 1;
+  const gl = g.createRadialGradient(X, Y - 0.45 * T, 4, X, Y - 0.45 * T, 0.9 * T); gl.addColorStop(0, 'rgba(255,250,200,0.85)'); gl.addColorStop(1, 'rgba(255,250,200,0)');
+  g.fillStyle = gl; g.beginPath(); g.arc(X, Y - 0.45 * T, 0.9 * T, 0, 7); g.fill();
+  if (!img(g, a, X, Y, 0.95 * T, { rot: Math.sin(R.t * 2 + p.i) * 0.12 })) { rr(g, X - 18, Y - 40, 36, 36, 8); outlineFill(g, '#cfd8e3', '#4a3a2a', 3); }
+  g.restore();
 }
 // v0.4.1: each world has its own boss with 4 poses (idle, move = attack, bopped, friendly); the sum is drawn as text on its belly.
 let BOSSART = null;
@@ -160,7 +211,7 @@ function boss(g, w) {
     const cx = X + (bx - a.ax) * wpx * sxs, cy = Y + (by - a.ay) * hh * sys, ew = Math.max(96, bw * wpx), eh = Math.max(40, bh * hh);
     g.save(); g.fillStyle = 'rgba(255,253,244,0.88)'; g.strokeStyle = 'rgba(58,33,22,0.35)'; g.lineWidth = 2;
     g.beginPath(); g.ellipse(cx, cy, ew / 2, eh / 2, 0, 0, 7); g.fill(); g.stroke();
-    const txt = `${B.q.a} x ${B.q.b}`; let fs = Math.round(Math.min(eh * 0.62, 36)); g.font = `800 ${fs}px system-ui, sans-serif`;
+    const txt = fx(B.q.a, B.q.b); let fs = Math.round(Math.min(eh * 0.62, 36)); g.font = `800 ${fs}px system-ui, sans-serif`;
     while (g.measureText(txt).width > ew * 0.86 && fs > 16) { fs -= 2; g.font = `800 ${fs}px system-ui, sans-serif`; }
     g.fillStyle = '#2b2238'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, cx, cy + 1); g.restore();
   }
@@ -224,6 +275,9 @@ function foxPose(w, dt) {
     if (thinking) face = 'think';
   }
   if (f.land > 0 && f.ground && !w.finished) pose = blend(pose, poseOf('land'), f.land / 0.12 * 0.7);
+  // v0.5 B2: Tail Spin = the tail turns round and round like a propeller; Slide = the jump pose, laid back (see fox())
+  if (f.glide && !f.ground && w.mode === 'play') { pose = blend(poseOf('jump'), poseOf('fall'), 0.3).slice(); const ti = rigKeys().indexOf('tail'); if (ti >= 0) pose[ti] = (R.t * 1500) % 360; face = 'joy'; }
+  if (f.slide > 0 && w.mode === 'play') { pose = poseOf('jump'); face = 'joy'; }
   return { pose, face };
 }
 function fox(g, w, dt) {
@@ -231,11 +285,15 @@ function fox(g, w, dt) {
   const f = w.fox; const { pose, face } = foxPose(w, dt);
   R.blinkT -= dt; const blink = R.blinkT < 0.12; if (R.blinkT < 0) R.blinkT = 2.5 + ((R.t * 7.3) % 2);
   if (f.inv > 0 && Math.floor(f.inv * 12) % 2 && !w.power) return;
-  g.save(); g.translate(sx(f.x), sy(f.y) + (f.sink > 0 ? (1 - f.sink / C.PIT_SINK_S) * 30 : 0)); const s = 0.9; g.scale(s * f.face, s);
+  g.save(); g.translate(sx(f.x), sy(f.y) + (f.sink > 0 ? (1 - f.sink / C.PIT_SINK_S) * 30 : 0)); const s = 0.9;
+  const fd = f.slide > 0 ? (f.slideDir || f.face) : f.face; g.scale(s * fd, s);
+  if (f.slide > 0) { g.translate(-6, -4); g.rotate(-1.2); } // lying back, feet first
+  else if (R.flipT > 0) { g.translate(0, -30); g.rotate(-(1 - R.flipT / 0.35) * Math.PI * 2); g.translate(0, 30); } // the double jump: a quick flip
   if (w.power === 'boots') { g.strokeStyle = '#ffd23f'; g.lineWidth = 4; g.beginPath(); for (let i = 0; i < 4; i++) { g.moveTo(-14, -2 - i * 4); g.lineTo(14, -4 - i * 4); } g.stroke(); }
   drawFox(g, pose, { face, blink });
   if (w.power === 'boots') { for (const dx of [-8, 8]) { rr(g, dx - 10, -14, 20, 12, 5); outlineFill(g, '#4f7cff', '#1d2a66', 3); } }
   g.restore();
+  if (f.glide && !f.ground) { const X = sx(f.x) - 22 * f.face, Y = sy(f.y + 0.9); g.strokeStyle = 'rgba(255,255,255,0.85)'; g.lineWidth = 3; for (let i = 0; i < 3; i++) { const a = R.t * 22 + i * 2.1; g.beginPath(); g.ellipse(X, Y, 26, 9, 0, a, a + 1.3); g.stroke(); } }
   if (w.power === 'bubble') { g.beginPath(); g.arc(sx(f.x), sy(f.y + 0.8), 46, 0, 7); g.fillStyle = 'rgba(160,220,255,0.25)'; g.fill(); g.strokeStyle = 'rgba(255,255,255,0.9)'; g.lineWidth = 3; g.stroke(); }
 }
 function ghost(g, gs) {
@@ -246,13 +304,21 @@ function ghost(g, gs) {
 }
 // ---- effects from sim events ----
 export function effects(w, evs) {
-  for (const e of evs) if (e.type === 'boss_bop') R.bossHit = 0.9;
-  if (reduced()) return;
   for (const e of evs) {
-    if (e.type === 'acorn' || e.type === 'flower') for (let i = 0; i < 6; i++) R.parts.push({ x: e.x, y: e.y, vx: Math.cos(i) * 2, vy: 2 + Math.sin(i) * 2, t: 0.5, c: '#ffd23f' });
+    if (e.type === 'boss_bop') R.bossHit = 0.9;
+    if (e.type === 'right') { R.flashT = 0.35; if (V.shake && !reduced()) R.shakeT = 0.18; }
+    if (e.type === 'sign') R.pulseT = 0.6;
+    if (e.type === 'jump2') R.flipT = 0.35;
+  }
+  if (reduced()) return;
+  const few = V.fewFx ? 3 : 1; // Calm mode: about a third of the bits
+  for (const e of evs) {
+    if (e.type === 'acorn' || e.type === 'flower') for (let i = 0; i < 6; i += few) R.parts.push({ x: e.x, y: e.y, vx: Math.cos(i) * 2, vy: 2 + Math.sin(i) * 2, t: 0.5, c: '#ffd23f' });
     if (e.type === 'bop') R.fx.push({ kind: 'poof', x: e.x, y: e.y + 0.7, t: 0 });
     if (e.type === 'land' && Math.abs(w.fox.vx) > 1) for (let i = 0; i < 3; i++) R.parts.push({ x: w.fox.x, y: w.fox.y + 0.1, vx: (i - 1) * 1.5, vy: 1, t: 0.3, c: '#d9c6a3' });
-    if (e.type === 'right' || e.type === 'boss_bop') for (let i = 0; i < 14; i++) R.parts.push({ x: w.fox.x, y: w.fox.y + 1, vx: Math.cos(i * 0.45) * 5, vy: Math.sin(i * 0.45) * 5 + 2, t: 0.8, c: ['#ffd23f', '#ff8fc8', '#7fd9ff', '#9be07a'][i % 4] });
+    if (e.type === 'right' || e.type === 'boss_bop') for (let i = 0; i < 14; i += few) R.parts.push({ x: w.fox.x, y: w.fox.y + 1, vx: Math.cos(i * 0.45) * 5, vy: Math.sin(i * 0.45) * 5 + 2, t: 0.8, c: ['#ffd23f', '#ff8fc8', '#7fd9ff', '#9be07a'][i % 4] });
+    if (e.type === 'jump2') for (let i = 0; i < 8; i += few) R.parts.push({ x: w.fox.x + (i - 3.5) * 0.15, y: w.fox.y, vx: (i - 3.5) * 0.8, vy: -1.5, t: 0.4, c: '#ffffff' });
+    if (e.type === 'slide') for (let i = 0; i < 6; i += few) R.parts.push({ x: w.fox.x - w.fox.face * 0.4, y: w.fox.y + 0.1, vx: -w.fox.face * (1 + i * 0.4), vy: 1.5 + i * 0.3, t: 0.4, c: '#d9c6a3' });
     if (e.type === 'bubble_pop') R.fx.push({ kind: 'ring', x: w.fox.x, y: w.fox.y + 0.8, t: 0 });
   }
 }
@@ -271,7 +337,7 @@ function fence(g, x) {
 }
 // ---- one frame ----
 export function draw(g, w, dt, { ghostAt = null } = {}) {
-  R.t += dt; R.dt = dt; R.bossHit = Math.max(0, R.bossHit - dt); P = WORLDS[w.lvl.world] || WORLDS.x2;
+  R.t += dt; R.dt = dt; R.flipT = Math.max(0, (R.flipT || 0) - dt); R.bossHit = Math.max(0, R.bossHit - dt); R.shakeT = Math.max(0, (R.shakeT || 0) - dt); R.flashT = Math.max(0, (R.flashT || 0) - dt); R.pulseT = Math.max(0, (R.pulseT || 0) - dt); P = WORLDS[w.lvl.world] || WORLDS.x2;
   const f = w.fox, L = w.lvl;
   // camera: Fox at 35% from the left, smooth; up when Fox is high (Spring Boots)
   const len = L.length || 20;
@@ -282,13 +348,19 @@ export function draw(g, w, dt, { ghostAt = null } = {}) {
   const ty = Math.max(0, f.y - 5.5);
   const k = Math.min(1, dt * 6);
   R.cam.x += (tx - R.cam.x) * (Math.abs(tx - R.cam.x) > 8 ? 1 : k); R.cam.y += (ty - R.cam.y) * k;
+  g.save();
+  if (R.shakeT > 0) g.translate(Math.sin(R.t * 90) * 6 * (R.shakeT / 0.18), Math.cos(R.t * 77) * 4 * (R.shakeT / 0.18));
   background(g, w);
+  // focus moment: the background dims a little while a sum is asked
+  const asking = w.bays.some((b) => b.state === 'ask' && sx(b.x0) < VW && sx(b.curtain) > 0) || !!(w.boss && w.boss.q && w.boss.phase === 'ask');
+  R.dim += ((asking ? 1 : 0) - (R.dim || 0)) * Math.min(1, dt * 5);
+  if (R.dim > 0.01) { g.fillStyle = `rgba(20,24,40,${(0.18 * R.dim).toFixed(3)})`; g.fillRect(-20, -20, VW + 40, VH + 40); }
   if (w.boss) { try { parade(g, w); } catch { /* never stop the game for a background picture */ } }
   // pits (soft leaf floors) between ground pieces
   const gr = L.ground.slice().sort((p, q) => p[0] - q[0]);
   for (let i = 1; i < gr.length; i++) if (gr[i][0] > gr[i - 1][1]) leafBed(g, gr[i - 1][1], gr[i][0]);
   for (const s of gr) earth(g, s[0], s[1], s[2] ?? 0, -40);
-  for (const s of L.solids || []) { if ((s[3] ?? 0) > 0.05 || s[2] - (s[3] ?? 0) <= 1.05) log(g, s[0], s[1], s[2], s[3] ?? 0); else earth(g, s[0], s[1], s[2], s[3] ?? 0); }
+  for (const s of L.solids || []) { if ((s[3] ?? 0) > 0.5 && s[2] - s[3] < 1.2) lowBranch(g, s[0], s[1], s[2], s[3]); else if ((s[3] ?? 0) > 0.05 || s[2] - (s[3] ?? 0) <= 1.05) log(g, s[0], s[1], s[2], s[3] ?? 0); else earth(g, s[0], s[1], s[2], s[3] ?? 0); }
   // v0.4: walls are invisible (v0.3 drew them as full-height green bars); the boss arena shows a short fence instead.
   if (L.fence) fence(g, L.fence);
   for (const m of L.mushrooms || []) mushroom(g, m[0]);
@@ -299,22 +371,24 @@ export function draw(g, w, dt, { ghostAt = null } = {}) {
     sign(g, b);
     if (sx(b.x0) > VW + 100 || sx(b.curtain) < -100) { continue; }
     b.plats.forEach((cx, i) => {
+      if (b.gone && b.gone.includes(i)) return; // v0.5a assist: only 2 platforms
       const sunk = b.sunk.includes(i);
       const val = b.q ? b.q.choices[i] : null;
-      numPlat(g, cx - C.PLAT_W / 2, C.PLAT_Y + b.plY[i] - (sunk ? 0.8 : 0), val, { glow: b.glow === i, ok: b.state === 'done' && b.q && i === b.q.correctIndex, fade: sunk ? 0.45 : 1 });
+      numPlat(g, cx - C.PLAT_W / 2, C.PLAT_Y + b.plY[i] - (sunk ? 0.8 : 0), val, { glow: b.glow === i, ok: b.state === 'done' && b.q && i === b.q.correctIndex, fade: sunk ? 0.45 : 1, pulse: b.state === 'ask' ? R.pulseT / 0.6 : 0, flash: b.state === 'done' && b.q && i === b.q.correctIndex ? R.flashT / 0.35 : 0 });
     });
     curtain(g, b);
   }
   if (w.boss) {
     boss(g, w);
     const B = w.boss;
-    if (B.q && B.phase === 'ask') bossPlats(w).forEach((p, i) => { const sunk = B.sunk.includes(i); numPlat(g, p.x0, C.PLAT_Y + B.plY[i] - (sunk ? 0.8 : 0), B.q.choices[i], { glow: B.glow === i, fade: sunk ? 0.45 : 1 }); });
+    if (B.q && B.phase === 'ask') bossPlats(w).forEach((p, i) => { if (B.gone && B.gone.includes(i)) return; const sunk = B.sunk.includes(i); numPlat(g, p.x0, C.PLAT_Y + B.plY[i] - (sunk ? 0.8 : 0), B.q.choices[i], { glow: B.glow === i, fade: sunk ? 0.45 : 1, pulse: R.pulseT / 0.6 }); });
   }
-  for (const p of w.pickups) { if (p.got) continue; if (sx(p.x) < -30 || sx(p.x) > VW + 30) continue; if (p.kind === 'acorn') acorn(g, p.x, p.y + Math.sin(R.t * 3 + p.x) * 0.06); else if (p.kind === 'flower') flower(g, p.x, p.y); else bubble(g, p); }
+  for (const p of w.pickups) { if (p.got) continue; if (sx(p.x) < -30 || sx(p.x) > VW + 30) continue; if (p.kind === 'acorn') acorn(g, p.x, p.y + Math.sin(R.t * 3 + p.x) * 0.06); else if (p.kind === 'part') shuttlePart(g, p, w); else if (p.kind === 'flower') flower(g, p.x, p.y); else bubble(g, p); }
   for (const m of w.mons) monster(g, m);
   ghost(g, ghostAt);
   fox(g, w, dt);
   drawEffects(g, dt);
+  g.restore();
 }
 // A still icon for menus (How to play, HUD power ring)
 export function iconCanvas(kind, size = 56) {

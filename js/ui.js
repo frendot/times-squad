@@ -3,10 +3,22 @@ import { CONFIG } from './config.js';
 import { dayOf, maxDay } from './learn.js';
 
 export const S = { settings: null, pid: null, pd: null, paused: false, flow: 0, screen: '', lastInput: Date.now(), strings: null, onResume: null, parentOpen: false };
-export async function loadStrings() {
-  const r = await fetch(new URL('../strings.en.json', import.meta.url));
-  S.strings = await r.json();
+// v0.5b1: English and German (Swiss Standard German). English is always loaded as the fallback for any missing key.
+export const LANGS = ['en', 'de'];
+let EN = null;
+export const lang = () => (S.strings && S.strings.lang) || 'en';
+export const autoLang = () => (typeof navigator !== 'undefined' && /^de\b/i.test(navigator.language || '') ? 'de' : 'en');
+export async function loadStrings(want = 'en') {
+  const get = async (l) => (await fetch(new URL(`../strings.${l}.json`, import.meta.url))).json();
+  if (!EN) EN = await get('en');
+  const l = LANGS.includes(want) ? want : 'en';
+  let L = EN;
+  if (l !== 'en') { try { L = await get(l); } catch { L = EN; } }
+  S.strings = { lang: L === EN ? 'en' : l, kid: { ...EN.kid, ...L.kid }, parent: { ...EN.parent, ...L.parent }, parent_gate: L.parent_gate || EN.parent_gate };
+  if (typeof document !== 'undefined') document.documentElement.lang = S.strings.lang === 'de' ? 'de-CH' : 'en';
 }
+// A times fact as text: "7 x 8" in English, "7 · 8" in German (Swiss school notation).
+export const fx = (a, b) => fill(S.strings ? S.strings.kid.fact_q : '{a} x {b}', { a, b });
 const fill = (s, v = {}) => s.replace(/\{(\w+)\}/g, (_, k) => (k in v ? String(v[k]) : '{' + k + '}'));
 export const t = (key, v) => fill(S.strings.kid[key] ?? key, v);
 export const tp = (key, v) => fill(S.strings.parent[key] ?? key, v);
@@ -55,7 +67,7 @@ export function setVar(node, name, val) { node.style.setProperty(name, val); }
 // A dot array: rows x cols, sized to fit the box. Options: faint, half (fade the right half for the 5s picture).
 export function dots(rows, cols, { max = 300, maxH = 220, cls = '', fade = null } = {}) {
   const d = Math.max(4, Math.min(26, Math.floor(Math.min(max / cols, maxH / rows)) - 2));
-  const n = el(`<div class="dots ${cls}" role="img" aria-label="${rows} x ${cols}"></div>`);
+  const n = el(`<div class="dots ${cls}" role="img" aria-label="${fx(rows, cols)}"></div>`);
   setVar(n, '--cols', cols); setVar(n, '--d', d + 'px');
   let h = '';
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) h += `<i class="${fade && fade(r, c) ? 'f' : ''}"></i>`;

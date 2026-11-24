@@ -2,11 +2,20 @@
 // v0.2's progress.runner block (coins, skins) is kept untouched but never shown.
 export { LEVEL_IDS, BOSS_IDS, CHAIN, nextLevel } from './levels.js';
 import { CHAIN } from './levels.js';
-export const defaultScroller = () => ({ acornsTotal: 0, unlocked: ['x2-L1'], timerVisible: true, jumpHelp: false, l1Missed: {}, l1Asked: {} });
+import { CONFIG } from './config.js';
+// v0.5a tester switch. Tests can force the normal chain with self.__tsChainOnly (set before the app loads).
+export const testAll = () => !!CONFIG.TEST_UNLOCK_ALL && !(typeof self !== 'undefined' && self.__tsChainOnly);
+export const canPlay = (sc, id) => testAll() || sc.unlocked.includes(id);
+export const defaultScroller = () => ({ acornsTotal: 0, unlocked: ['x2-L1'], timerVisible: true, jumpHelp: false, l1Missed: {}, l1Asked: {},
+  hardMode: false, calm: false, calmNoShake: false, calmFewFx: false, calmSoft: false, calmNoMusic: false, calmSlow: false }); // v0.5a: Hard mode and Calm mode, both off
+export const CALM_KEYS = ['calmNoShake', 'calmFewFx', 'calmSoft', 'calmNoMusic', 'calmSlow'];
+// Calm mode: one switch sets all of these (and hides the timer); each one can also be changed alone.
+export function setCalm(sc, on) { sc.calm = !!on; for (const k of CALM_KEYS) sc[k] = !!on; sc.timerVisible = !on; }
+export const calmOf = (sc) => ({ shake: !sc.calmNoShake, fewFx: !!sc.calmFewFx, soft: !!sc.calmSoft, music: !!sc.calmNoMusic, slow: !!sc.calmSlow });
 export function newPlayerData(pid) {
-  return { pid, progress: { schemaVersion: 4, howToSeen: false, scroller: defaultScroller() }, facts: {}, run: null, attempts: [], history: [], playtime: {}, levels: {}, ghosts: {} };
+  return { pid, progress: { schemaVersion: 7, howToSeen: false, scroller: defaultScroller(), warmups: [], parts: {}, stickers: [] }, facts: {}, run: null, attempts: [], history: [], playtime: {}, levels: {}, ghosts: {} };
 }
-// v0.1 / v0.2 / v0.3 progress -> v0.4 progress. Idempotent: running it twice changes nothing. Returns [progress, changed].
+// v0.1 / v0.2 / v0.3 / v0.4 / v0.5a / v0.5b1 progress -> v0.5b2 progress (schema 7). Idempotent: running it twice changes nothing. Returns [progress, changed].
 export function migrate(progress) {
   const p = { ...progress };
   let changed = false;
@@ -26,6 +35,25 @@ export function migrate(progress) {
     delete sc.reviewList;
     p.schemaVersion = 4; changed = true;
   }
+  if ((p.schemaVersion || 1) < 5) {
+    // v0.5a: Hard mode and Calm mode come in switched off; everything else (unlocks, misses, medals) is kept as it is.
+    for (const [k, v] of Object.entries(defaultScroller())) if (k.startsWith('calm') || k === 'hardMode') sc[k] = typeof sc[k] === 'boolean' ? sc[k] : v;
+    p.schemaVersion = 5; changed = true;
+  }
+  if ((p.schemaVersion || 1) < 6) {
+    // v0.5b1: Brain Warm-up results live in progress.warmups (on the device only). Old saves start with none; nothing else changes.
+    p.warmups = Array.isArray(p.warmups) ? p.warmups : [];
+    p.schemaVersion = 6; changed = true;
+  }
+  if ((p.schemaVersion || 1) < 7) {
+    // v0.5b2: shuttle parts found per level and Share Door stickers. Old saves start with none; unlocks, medals and warm-ups are kept.
+    p.parts = p.parts && typeof p.parts === 'object' && !Array.isArray(p.parts) ? p.parts : {};
+    p.stickers = Array.isArray(p.stickers) ? p.stickers : [];
+    p.schemaVersion = 7; changed = true;
+  }
+  if (!Array.isArray(p.warmups)) { p.warmups = []; changed = true; }
+  if (!p.parts || typeof p.parts !== 'object' || Array.isArray(p.parts)) { p.parts = {}; changed = true; }
+  if (!Array.isArray(p.stickers)) { p.stickers = []; changed = true; }
   if (!Array.isArray(sc.unlocked) || !sc.unlocked.includes('x2-L1')) sc.unlocked = ['x2-L1', ...(Array.isArray(sc.unlocked) ? sc.unlocked : [])];
   if (!sc.l1Missed || typeof sc.l1Missed !== 'object') sc.l1Missed = {};
   if (!sc.l1Asked || typeof sc.l1Asked !== 'object') sc.l1Asked = {};
@@ -60,7 +88,8 @@ export function migrateLevels(levels, ghosts) {
 // Unlock repair, run on every load (v0.4 hotfix). A node counts as done when it has a medal or a finish date (boss wins too).
 // 1) every node up to the furthest unlocked or done node is open (no gaps); 2) a done node opens the next one.
 // Never removes an unlock. Returns true if it changed anything.
-export const isDone = (r) => !!(r && (r.medal || r.finishedOn));
+// v0.5a: a record made only because of TEST_UNLOCK_ALL (testOnly) is NOT done: it never opens anything.
+export const isDone = (r) => !!(r && !r.testOnly && (r.medal || r.finishedOn));
 export function repairUnlocks(sc, levels) {
   if (!Array.isArray(sc.unlocked)) sc.unlocked = ['x2-L1'];
   const before = sc.unlocked.join();

@@ -5,10 +5,11 @@ let ctx = null, sfx = null, mus = null, musicSrc = null;
 const buffers = {};
 const stats = { total: 0, loaded: 0, failed: 0, played: 0 };
 self.__tsAudio = stats;
-let soundOn = true, musicOn = false, wantMusic = false, loading = null;
+let soundOn = true, musicOn = false, wantMusic = false, loading = null, soft = 1, noMusic = false; // v0.5a Calm: softer sounds, music off
 const FILES = ['tap', 'pop', 'feet', 'glock', 'chimes', 'cheer', 'woo', 'boing', 'shuffle', 'clap', 'squeak', 'splat', 'splosh', 'giggle',
   'laugh', 'munch', 'stomp', 'swish', 'fabric', 'uke', 'fanfare', 'ting', 'hmph', 'music', 'leafstep', 'rustle', 'sneeze', 'wind', 'spring',
-  'toybop', 'duck', 'moo', 'goat', 'cowbell', 'hiccup', 'rain', 'snowstep', 'bubbles', 'blow', 'hey', 'roar']; // v0.4.1 boss sounds
+  'toybop', 'duck', 'moo', 'goat', 'cowbell', 'hiccup', 'rain', 'snowstep', 'bubbles', 'blow', 'hey', 'roar', // v0.4.1 boss sounds
+  'towel', 'slidewood', 'carrot', 'bzz', 'claws', 'mouse', 'drip', 'snore', 'wheel', 'woodtap', 'coinspin', 'squelch', 'ball', 'sponge', 'jingle', 'rocket', 'vacuum', 'ching', 'door']; // v0.5 B2
 // Event -> [file, playback rate, gain]. Pitch steps use the playback rate of the same real recording.
 const EVENTS = {
   ui_tap: ['tap', 1, 0.8], start_jingle: ['fanfare', 1, 0.9],
@@ -18,7 +19,11 @@ const EVENTS = {
   bop: ['pop', 0.7, 1], bump: ['hmph', 1.2, 0.6], right: ['chimes', 1, 0.7], wrong: ['squeak', 1, 0.5], curtain: ['rustle', 0.9, 0.7],
   checkpoint: ['glock', 1.26, 0.6], finish: ['fanfare', 1, 0.9], medal: ['clap', 1, 0.7], cheer: ['cheer', 1, 0.7],
   attack_warn: ['hmph', 0.85, 0.9], attack_spin: ['wind', 1, 0.9], attack_stomp: ['stomp', 1, 0.9], attack_sneeze: ['sneeze', 1, 1], boss_bop: ['toybop', 1, 1], boss_win: ['laugh', 1, 1], fanfare_win: ['fanfare', 1, 1],
+  focus: ['glock', 1.5, 0.3], ding: ['ting', 1.2, 0.6], leg: ['chimes', 1.35, 0.55], penalty: ['tap', 0.7, 0.5], restart: ['swish', 1.2, 0.5],
   squeak: ['squeak', 1.3, 0.5], giggle: ['giggle', 1, 0.6], woo: ['woo', 1, 0.8],
+  // v0.5 B2: moves, parts, score, Share Door, launch (all real recordings, SOUNDS.md)
+  jump2: ['fabric', 1.5, 0.55], glide: ['towel', 1, 0.6], slide: ['slidewood', 1, 0.7], part: ['chimes', 1.5, 0.6], part_gold: ['glock', 1.68, 0.6],
+  score_line: ['ching', 1, 0.7], share_door: ['door', 1, 0.8], sticker: ['pop', 1.2, 0.8], count: ['glock', 1.12, 0.8], rocket: ['rocket', 0.8, 1], rumble: ['vacuum', 1, 0.8],
 };
 // v0.4.1 boss moves: look -> layers of [file, rate, gain, delay s]. All real recordings (see SOUNDS.md for the stand-ins).
 const BOSS_SFX = {
@@ -39,6 +44,13 @@ export function bossSound(look) {
   const L = BOSS_SFX[look]; if (!L) return false;
   let any = false; for (const [f, r, g, d] of L) any = playBuf(f, r, g, d || 0) || any; return any || !!ctx;
 }
+// v0.5b2: each bad guy's own sound when bopped (layered on the shared pop). All real recordings (SOUNDS.md).
+const BAD_SFX = { bee: ['bzz', 1.1, 0.7], carrot: ['carrot', 1, 0.8], crab: ['claws', 1, 0.8], starfish: ['giggle', 1.3, 0.6], ufo: ['bubbles', 1.3, 0.6],
+  mouse: ['mouse', 1, 0.7], cloud: ['blow', 1.2, 0.7], raindrop: ['drip', 1, 0.8], tumbleweed: ['rustle', 1.2, 0.8], lizard: ['snore', 1, 0.7],
+  cheese: ['wheel', 1, 0.8], pinecone: ['woodtap', 1, 0.8], ringrock: ['coinspin', 1, 0.7], jelly: ['squelch', 1, 0.8], snowball: ['snowstep', 1.2, 0.9],
+  penguin: ['slidewood', 1.4, 0.7], storm: ['wind', 1.3, 0.7], moon: ['ball', 1, 0.8], sparklestar: ['jingle', 1, 0.7], paintblob: ['sponge', 1, 0.8] };
+export function badSound(name) { const b = BAD_SFX[name]; return b ? playBuf(b[0], b[1], b[2], 0.06) : false; }
+export const BAD_NAMES = Object.keys(BAD_SFX);
 // The shared laugh, pitched per boss (the same recording at a different playback rate).
 export const laugh = (rate = 1) => playBuf('laugh', rate, 1);
 export const BOSS_LOOKS = Object.keys(BOSS_SFX);
@@ -49,8 +61,8 @@ export function unlock() {
     if (!ctx) {
       const AC = self.AudioContext || self.webkitAudioContext; if (!AC) return;
       ctx = new AC();
-      sfx = ctx.createGain(); sfx.gain.value = soundOn ? 1 : 0; sfx.connect(ctx.destination);
-      mus = ctx.createGain(); mus.gain.value = musicOn ? 0.35 : 0; mus.connect(ctx.destination);
+      sfx = ctx.createGain(); sfx.gain.value = soundOn ? soft : 0; sfx.connect(ctx.destination);
+      mus = ctx.createGain(); mus.gain.value = musicOn && !noMusic ? 0.35 : 0; mus.connect(ctx.destination);
     }
     if (ctx.state !== 'running') ctx.resume().catch(() => {});
   } catch { ctx = null; }
@@ -85,11 +97,12 @@ export function play(event, opts = {}) {
 }
 // Rising notes on the same glockenspiel recording (power meter).
 export const step = (event, n) => play(event, { rate: STEP(SCALE[Math.max(0, Math.min(SCALE.length - 1, n))]) });
-export function setSound(on) { soundOn = on; if (sfx) sfx.gain.value = on ? 1 : 0; }
+export function setSound(on) { soundOn = on; if (sfx) sfx.gain.value = on ? soft : 0; }
+export function setCalm({ soft: sf = false, music: nm = false } = {}) { soft = sf ? 0.55 : 1; noMusic = !!nm; if (sfx) sfx.gain.value = soundOn ? soft : 0; if (mus) mus.gain.value = musicOn && !noMusic ? 0.35 : 0; if (noMusic) stopMusic(); }
 export function setMusic(on) { musicOn = on; if (mus) mus.gain.value = on ? 0.35 : 0; if (on) startMusic(); else stopMusic(); }
 export function startMusic() {
   wantMusic = true;
-  if (!ctx || !musicOn || musicSrc || !buffers.music) return;
+  if (!ctx || !musicOn || noMusic || musicSrc || !buffers.music) return;
   try { musicSrc = ctx.createBufferSource(); musicSrc.buffer = buffers.music; musicSrc.loop = true; musicSrc.connect(mus); musicSrc.start(); stats.played++; } catch { musicSrc = null; }
 }
 export function stopMusic() { wantMusic = musicOn && wantMusic; if (musicSrc) { try { musicSrc.stop(); } catch { /* already stopped */ } musicSrc = null; } }

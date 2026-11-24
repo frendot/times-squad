@@ -7,6 +7,7 @@ export async function loadRig() {
 }
 const D = Math.PI / 180;
 const lerp = (a, b, k) => a + (b - a) * k;
+export const rigKeys = () => (RIG ? RIG.keys : []);
 export function poseOf(name) { return RIG && RIG.poses[name]; }
 export function blend(p, q, k) { return p.map((v, i) => lerp(v, q[i], k)); }
 export function runPose(phase) { // phase 0..1

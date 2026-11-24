@@ -1,6 +1,6 @@
 // Start-up: strings, storage, sound settings, service worker, pause on background, play-time counting.
 import { CONFIG } from './config.js';
-import { S, loadStrings, today } from './ui.js';
+import { S, loadStrings, today, autoLang } from './ui.js';
 import * as store from './store.js';
 import * as A from './audio.js';
 import { loadArt, artFile } from './artpack.js';
@@ -9,7 +9,6 @@ import { start, goHome, choosePlayer } from './screens.js';
 import { pauseGame, isRunning } from './game.js';
 
 async function boot() {
-  await loadStrings();
   const d0 = new Date(); const pad = (n) => String(n).padStart(2, '0');
   await Promise.all([store.open(), loadArt(), loadRig()]);
   const sign = artFile && (await import('./artpack.js')).art(['sign'], ['wood', 'sign']);
@@ -18,6 +17,7 @@ async function boot() {
   if (panel) document.documentElement.style.setProperty('--panel-img', `url("${panel.img.src}")`);
   S.settings = await store.loadSettings(`${d0.getFullYear()}-${pad(d0.getMonth() + 1)}-${pad(d0.getDate())}`);
   today(); store.saveSettings(S.settings);
+  await loadStrings(S.settings.lang || autoLang()); // v0.5b1: English or German (a device setting; first start follows the browser language)
   A.setSound(S.settings.sound); A.setMusic(S.settings.music);
   for (const n of document.querySelectorAll('[data-s]')) n.textContent = S.strings.kid[n.dataset.s];
   self.__tsBooted = true;

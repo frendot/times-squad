@@ -4,7 +4,9 @@
 import { CONFIG as C } from './config.js';
 
 const DT = C.STEP_S;
-export const BITS = { left: 1, right: 2, jump: 4 };
+export const BITS = { left: 1, right: 2, jump: 4, down: 8 };
+// v0.5 B2: Fox's height (a slide makes Fox low)
+export const foxH = (f) => (f.slide > 0 ? C.SLIDE_H : C.FOX_H);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const tri = (t, period) => { const p = ((t / period) % 1 + 1) % 1; return p < 0.5 ? p * 4 - 1 : 3 - p * 4; }; // -1..1..-1
 
@@ -12,16 +14,17 @@ export function newWorld(lvl, opts = {}) {
   const w = {
     lvl, kind: lvl.kind, steps: 0, timer: 0, timerOn: false, started: false, finished: false, frozen: 0,
     mode: 'play', modeT: 0, card: null, events: [], acorns: 0, acornsGot: 0,
-    jumpHelp: !!opts.jumpHelp,
+    jumpHelp: !!opts.jumpHelp, slow: opts.calm ? C.CALM_SLOW : 1, hard: !!opts.hard, penalty: 0, rightCount: 0, cardTap: false,
     fox: { x: lvl.start, y: 0, vx: 0, vy: 0, ground: true, on: null, coyote: 0, buf: 0, held: false, face: 1, inv: 0, push: 0, sink: 0, wobble: 0,
-      safe: { x: lvl.start, y: 0 }, still: 0, bop: 0, land: 0, launch: null },
+      safe: { x: lvl.start, y: 0 }, still: 0, bop: 0, land: 0, launch: null, dj: false, glide: false, slide: 0 },
     prev: 0, power: null, powerT: 0, powersGot: 0,
-    pickups: (lvl.acorns || []).map(([x, y]) => ({ kind: 'acorn', x, y, got: false })),
+    pickups: [...(lvl.acorns || []).map(([x, y]) => ({ kind: 'acorn', x, y, got: false })), ...(lvl.parts || []).map(([x, y], i) => ({ kind: 'part', i, x, y, got: false, had: (opts.hadParts || []).includes(i) }))],
+    partsGot: [], // v0.5b2 shuttle parts found in this run
     mons: (lvl.monsters || []).map((m, i) => ({ ...m, id: i, x: m.x, y: m.y || 0, state: 'live', t: 0, dir: 1 })),
-    bays: (lvl.bays || []).map((b) => ({ ...b, q: null, state: 'wait', sunk: [], misses: 0, plY: [0, 0, 0], open: 0, glow: -1, landed: -1 })),
+    bays: (lvl.bays || []).map((b) => ({ ...b, q: null, state: 'wait', sunk: [], gone: [], misses: 0, plY: [0, 0, 0], open: 0, glow: -1, landed: -1 })),
     qi: -1, qShown: false, answers: [], checkpoint: false, bossBops: 0, boss: null,
   };
-  if (lvl.kind === 'boss') w.boss = { bops: 0, phase: 'intro', t: 0, attack: null, attackI: 0, drift: 0, driftOn: true, q: null, sunk: [], misses: 0, plY: [0, 0, 0], glow: -1, retry: [], scale: 1, done: false };
+  if (lvl.kind === 'boss') w.boss = { bops: 0, phase: 'intro', t: 0, attack: null, attackI: 0, drift: 0, driftOn: true, q: null, sunk: [], gone: [], misses: 0, plY: [0, 0, 0], glow: -1, retry: [], scale: 1, done: false };
   if (opts.resume) Object.assign(w, opts.resume(w));
   return w;
 }
@@ -41,14 +44,22 @@ export function onewaysAt(w) {
   const t = w.steps * DT, out = [];
   for (const p of w.lvl.oneway || []) out.push({ x0: p[0], x1: p[1], y: p[2] });
   for (const m of w.lvl.movers || []) { const y = moverY(m, t); out.push({ x0: m.x0, x1: m.x1, y, mover: m, dy: y - moverY(m, t - DT) }); }
-  for (const b of w.bays) if (b.q || b.state === 'wait') b.plats.forEach((cx, i) => { if (!b.sunk.includes(i)) out.push({ x0: cx - C.PLAT_W / 2, x1: cx + C.PLAT_W / 2, y: C.PLAT_Y + b.plY[i], bay: b, i, num: true }); });
-  if (w.boss && w.boss.q && w.boss.phase === 'ask') bossPlats(w).forEach((p, i) => { if (!w.boss.sunk.includes(i)) out.push({ ...p, y: C.PLAT_Y + w.boss.plY[i], boss: true, i, num: true }); });
+  for (const b of w.bays) if (b.q || b.state === 'wait') b.plats.forEach((cx, i) => { if (!b.sunk.includes(i) && !b.gone.includes(i)) out.push({ x0: cx - C.PLAT_W / 2, x1: cx + C.PLAT_W / 2, y: C.PLAT_Y + b.plY[i], bay: b, i, num: true }); });
+  if (w.boss && w.boss.q && w.boss.phase === 'ask') bossPlats(w).forEach((p, i) => { if (!w.boss.sunk.includes(i) && !w.boss.gone.includes(i)) out.push({ ...p, y: C.PLAT_Y + w.boss.plY[i], boss: true, i, num: true }); });
   if (w.lvl.ledges) for (const p of w.lvl.ledges) out.push({ x0: p[0], x1: p[1], y: p[2] });
   return out;
 }
 export function bossPlats(w) {
   const B = w.boss, off = clamp(B.drift, -1, 1);
   return w.lvl.bossPlats.map((cx) => ({ x0: cx + off - C.PLAT_W / 2, x1: cx + off + C.PLAT_W / 2, cx: cx + off }));
+}
+// v0.5 B2: is there a solid right above a sliding Fox (so Fox cannot stand up yet)?
+function roofOver(w, f) { const hw = C.FOX_W / 2; return solidsAt(w).some((s) => f.x + hw > s.x0 && f.x - hw < s.x1 && s.bot > f.y + 0.01 && s.bot < f.y + C.FOX_H); }
+// v0.5 B2: a surface right below a falling Fox (a jump press here is a buffered ground jump, not a double jump)
+function nearFloor(w, f) {
+  const hw = C.FOX_W / 2, reach = Math.max(0.35, -f.vy * C.JUMP_BUFFER_S);
+  if (f.vy > 0) return false;
+  return solidsAt(w).some((s) => f.x + hw > s.x0 && f.x - hw < s.x1 && s.top <= f.y + 0.001 && s.top >= f.y - reach) || onewaysAt(w).some((p) => f.x >= p.x0 && f.x <= p.x1 && p.y <= f.y + 0.001 && p.y >= f.y - reach);
 }
 export const inBay = (w) => w.bays.find((b) => w.fox.x > b.x0 && w.fox.x < b.curtain + 0.6) || null;
 
@@ -59,14 +70,17 @@ export function step(w, bits, ctx) {
   if (w.finished) return w;
   if (!w.started && bits) { w.started = true; if (w.kind !== 'boss') { w.timerOn = true; emit(w, 'timer_start'); } }
   if (w.restoreHold && bits) w.restoreHold = false;
-  const jumpEdge = (bits & 4) && !(w.prev & 4);
+  const jumpEdge = (bits & 4) && !(w.prev & 4), downEdge = (bits & 8) && !(w.prev & 8);
   w.prev = bits;
   // ---- wrong-answer moment: sink, then the card (the world and the timer are frozen) ----
   if (w.mode === 'sink' || w.mode === 'card') {
     w.modeT -= DT;
     if (w.mode === 'sink') { const b = w.card.bay; b.plY[w.card.i] -= DT / C.SINK_S * 0.8; f.y = C.PLAT_Y + b.plY[w.card.i]; }
+    // v0.5a: the card stays at least CARD_MIN_S, then a jump press or a tap (w.cardTap) closes it; CARD_MAX_S is a safety close
+    if (w.mode === 'card' && C.CARD_MAX_S - w.modeT >= C.CARD_MIN_S && (jumpEdge || w.cardTap)) w.modeT = 0;
+    if (w.mode === 'card') w.cardTap = false;
     if (w.modeT <= 0) {
-      if (w.mode === 'sink') { w.mode = 'card'; w.modeT = w.card.secs; emit(w, 'card', { card: w.card }); }
+      if (w.mode === 'sink') { w.mode = 'card'; w.modeT = C.CARD_MAX_S; w.cardTap = false; emit(w, 'card', { card: w.card }); }
       else { const b = w.card.bay; b.sunk.push(w.card.i); f.on = null; f.ground = false; f.vy = 0; w.mode = 'play'; w.card = null; emit(w, 'card_close'); }
     }
     return w;
@@ -93,6 +107,13 @@ export function step(w, bits, ctx) {
   const want = ((bits & 2) ? 1 : 0) - ((bits & 1) ? 1 : 0);
   const acc = C.RUN_SPEED / C.RUN_ACCEL_S;
   let target = f.push > 0 || f.wobble > 0 ? f.vx : want * C.RUN_SPEED;
+  // ---- v0.5 B2 Slide: Down while running on the ground; Fox stays low and keeps going for SLIDE_S (longer while under something) ----
+  if (downEdge && f.ground && !f.slide && Math.abs(f.vx) >= C.SLIDE_MIN_V && f.push <= 0 && f.wobble <= 0 && !f.pend) { f.slide = C.SLIDE_S; f.slideDir = Math.sign(f.vx); emit(w, 'slide'); }
+  if (f.slide > 0) {
+    target = f.slideDir * C.RUN_SPEED * C.SLIDE_SPEED;
+    f.slide -= DT;
+    if (f.slide <= 0 || !f.ground) { if (roofOver(w, f)) f.slide = Math.max(f.slide, DT); else f.slide = 0; }
+  }
   if (f.push > 0) f.push -= DT;
   if (f.wobble > 0) { f.wobble -= DT; target = 0; }
   if (w.boss && w.boss.attack && w.boss.attack.kind === 'spin' && w.boss.attack.live) target -= C.WIND_V;
@@ -102,17 +123,25 @@ export function step(w, bits, ctx) {
   const coyoteS = w.jumpHelp ? C.JUMP_HELP.COYOTE_S : C.COYOTE_S;
   if (f.ground) f.coyote = coyoteS; else f.coyote -= DT;
   if (jumpEdge) f.buf = C.JUMP_BUFFER_S; else f.buf -= DT;
-  if (f.buf > 0 && f.coyote > 0 && f.wobble <= 0) {
-    const boots = w.power === 'boots';
+  if (f.ground) { f.dj = false; f.glide = false; }
+  if (f.buf > 0 && f.coyote > 0 && f.wobble <= 0 && !(f.slide > 0 && roofOver(w, f))) {
+    const boots = w.power === 'boots'; f.slide = 0;
     f.vy = (boots ? C.BOOTS_JUMP_V : C.JUMP_V) * (w.jumpHelp ? Math.sqrt(C.JUMP_HELP.JUMP_MULT) : 1);
     f.ground = false; f.on = null; f.coyote = 0; f.buf = 0; f.held = true; emit(w, boots ? 'jump_big' : 'jump');
   }
+  // ---- v0.5 B2 double jump: one more jump in the air (not just before a landing, where the jump buffer works) ----
+  else if (jumpEdge && !f.ground && f.coyote <= 0 && !f.dj && f.wobble <= 0 && f.push <= 0 && !nearFloor(w, f)) {
+    f.vy = C.DJUMP_V; f.dj = true; f.held = true; f.buf = 0; f.glide = false; emit(w, 'jump2');
+  }
   if (!(bits & 4)) { if (f.held && f.vy > C.HOP_CUT_V) f.vy = C.HOP_CUT_V; f.held = false; }
   f.vy = Math.max(-30, f.vy - C.GRAVITY * DT);
+  // ---- v0.5 B2 Tail Spin: hold jump while falling to float down slowly ----
+  if (!f.ground && f.vy < -C.GLIDE_V && (bits & 4) && f.push <= 0 && f.wobble <= 0) { f.vy = -C.GLIDE_V; if (!f.glide) { f.glide = true; emit(w, 'glide'); } }
+  else if (f.glide && (!(bits & 4) || f.ground)) f.glide = false;
   // ride a moving platform
   if (f.ground && f.on && f.on.mover) f.y += f.on.dy;
   // ---- move x, collide with solids ----
-  const hw = C.FOX_W / 2, H = C.FOX_H, solids = solidsAt(w);
+  const hw = C.FOX_W / 2, H = foxH(f), solids = solidsAt(w);
   let nx = f.x + f.vx * DT;
   for (const s of solids) {
     if (f.y < s.top - 0.001 && f.y + H > s.bot && nx + hw > s.x0 && nx - hw < s.x1) {
@@ -132,7 +161,8 @@ export function step(w, bits, ctx) {
   if (!landed && f.vy <= 0) {
     for (const p of onewaysAt(w)) {
       // a platform counts only when the middle of the feet is inside its edges (spec 4.4)
-      if (f.x >= p.x0 && f.x <= p.x1 && py >= p.y - 0.001 - Math.max(0, p.dy || 0) && ny < p.y) { if (!landed || p.y > landed.top) { ny = p.y; landed = { ...p, top: p.y }; } }
+      const pad = p.num ? C.PLAT_EDGE_PAD : 0;
+      if (f.x >= p.x0 - pad && f.x <= p.x1 + pad && py >= p.y - 0.001 - Math.max(0, p.dy || 0) && ny < p.y) { if (!landed || p.y > landed.top) { ny = p.y; landed = { ...p, top: p.y }; } }
     }
   }
   const wasGround = f.ground;
@@ -143,8 +173,14 @@ export function step(w, bits, ctx) {
     if (landed.mush) { f.vy = C.BOUNCE_V; f.ground = false; f.on = null; emit(w, 'mushroom'); }
     else if (!landed.mover && !landed.num && !landed.curtain && !wasGround) f.safe = { x: clamp(f.x, landed.x0 + 0.7, landed.x1 - 0.7), y: landed.top };
     else if (!landed.mover && !landed.num && wasGround && f.x > landed.x0 + 0.7 && f.x < landed.x1 - 0.7) f.safe = { x: f.x, y: landed.top };
-    if (landed.num && !wasGround) platformLanding(w, landed, ctx);
+    // v0.5a: a number counts only after Fox stays on it LAND_CONFIRM_S (a landing while pushed or bounced never starts it)
+    if (landed.num && !wasGround && f.push <= 0 && f.bop <= 0) f.pend = { i: landed.i, boss: !!landed.boss, bay: landed.bay || null, t: 0 };
   } else { f.ground = false; f.on = null; }
+  if (f.pend) {
+    const o = f.on, P = f.pend;
+    if (f.ground && o && o.num && o.i === P.i && !!o.boss === P.boss && (o.bay || null) === P.bay) { P.t += DT; if (P.t >= C.LAND_CONFIRM_S - 1e-9) { f.pend = null; platformLanding(w, o, ctx); } }
+    else f.pend = null;
+  }
   // mushrooms are short solids that bounce
   for (const m of w.lvl.mushrooms || []) if (f.vy <= 0 && Math.abs(f.x - m[0]) < 0.7 && py >= 0.6 - 0.001 && f.y <= 0.6 && f.y > 0.1) { f.y = 0.6; f.vy = C.BOUNCE_V; f.ground = false; emit(w, 'mushroom'); }
   if (f.y < -1.4 && f.sink <= 0) { f.sink = C.PIT_SINK_S; f.vy = 0; f.vx = 0; emit(w, 'pit'); }
@@ -160,7 +196,7 @@ function endStep(w, ctx) {
   // ---- signs: the sum shows from the sign until the bay is answered ----
   for (let i = 0; i < w.bays.length; i++) {
     const b = w.bays[i];
-    if (b.state === 'wait' && f.x >= b.sign) { b.state = 'ask'; b.q = ctx.ask(i, w); w.qi = i; emit(w, 'sign', { i, q: b.q }); }
+    if (b.state === 'wait' && f.x >= b.sign) { b.state = 'ask'; b.q = ctx.ask(i, w); w.qi = i; if (b.q && b.q.assist) { b.gone = [b.q.drop]; emit(w, 'assist', { i }); } emit(w, 'sign', { i, q: b.q }); }
   }
   // ---- curtains ----
   for (const b of w.bays) if (b.state === 'done' && b.open < 1) b.open = Math.min(1, b.open + DT / C.CURTAIN_OPEN_S);
@@ -176,6 +212,7 @@ function endStep(w, ctx) {
       p.got = true;
       if (p.kind === 'acorn') { w.acorns++; w.acornsGot++; emit(w, 'acorn', { x: p.x, y: p.y }); }
       else if (p.kind === 'flower') { w.acorns += C.FLOWER_ACORNS; w.acornsGot += C.FLOWER_ACORNS; emit(w, 'flower', { x: p.x, y: p.y }); }
+      else if (p.kind === 'part') { w.partsGot.push(p.i); emit(w, 'part', { i: p.i, x: p.x, y: p.y, n: w.partsGot.length, had: p.had }); }
       else if (p.kind === 'bubble') { w.power = p.power; w.powerT = C.POWER_S; w.powersGot++; emit(w, 'power', { power: p.power }); }
     }
   }
@@ -183,14 +220,15 @@ function endStep(w, ctx) {
   for (const m of w.mons) {
     if (m.state === 'bopped') { m.t += DT; m.x += 6 * DT * m.dir; m.y += (3 - m.t * 12) * DT; if (m.t > 1.5) m.state = 'gone'; continue; }
     if (m.state !== 'live') continue;
-    if (m.type === 'pine') { const span = m.x1 - m.x0; const ph = (t * C.PINE_SPEED) / span; const k = tri(ph / 2, 1); m.x = m.x0 + span * (k + 1) / 2; m.dir = Math.sign(tri((ph + 0.01) / 2, 1) - k) || 1; }
-    else if (m.type === 'frog') { const ph = (t % C.FROG_EVERY_S); const hopT = 0.8; m.y = ph < hopT ? C.FROG_HOP_T * 4 * (ph / hopT) * (1 - ph / hopT) : 0; }
+    if (m.type === 'pine') { const span = m.x1 - m.x0; const ph = (t * C.PINE_SPEED * w.slow) / span; const k = tri(ph / 2, 1); m.x = m.x0 + span * (k + 1) / 2; m.dir = Math.sign(tri((ph + 0.01) / 2, 1) - k) || 1; }
+    if (m.fly) m.y = C.FLY_Y + Math.sin(t * 2.5 + m.id) * C.FLY_BOB; // v0.5b2 flyers hover: slide under or bop from above
+    else if (m.type === 'frog') { const ph = (t % (C.FROG_EVERY_S / w.slow)); const hopT = 0.8; m.y = ph < hopT ? C.FROG_HOP_T * 4 * (ph / hopT) * (1 - ph / hopT) : 0; }
     const dx = Math.abs(m.x - f.x), dy = (f.y) - (m.y + 0.9);
-    if (dx < 0.95 && f.y < m.y + 1.0 && f.y + C.FOX_H > m.y) {
+    if (dx < 0.95 && f.y < m.y + (m.h || 1.0) && f.y + foxH(f) > m.y) {
       if (f.vy < 0 && dy > -0.55) { // landed on its head: bop
         m.state = 'bopped'; m.t = 0; m.dir = f.x < m.x ? 1 : -1; f.vy = C.BOP_V; f.ground = false; f.bop = 0.3;
         w.pickups.push({ kind: 'flower', x: m.x, y: m.y + 0.5, got: false });
-        emit(w, 'bop', { m: m.type, x: m.x, y: m.y });
+        emit(w, 'bop', { m: m.type, bad: m.bad, x: m.x, y: m.y });
       } else if (f.inv <= 0) bump(w, m.x);
     }
   }
@@ -214,17 +252,18 @@ function platformLanding(w, p, ctx) {
   emit(w, 'land_num', { i: p.i, right });
   if (right) {
     const res = ctx.answer(q, p.i, { first, w, misses: holder.misses });
-    w.answers.push({ q: q.factId, first, misses: holder.misses });
+    w.answers.push({ q: q.factId, first, misses: holder.misses }); w.rightCount++;
     holder.glow = p.i;
     if (p.boss) { bossRight(w, p); emit(w, 'right', { q, first, res }); return; }
-    holder.state = 'done'; w.qShownDone = true;
+    holder.state = 'done'; w.qShownDone = true; w.fox.vy = 7; w.fox.ground = false; w.fox.on = null; // a quick happy hop
     emit(w, 'right', { q, first, res, i: holder.i });
     if (first && ctx.powerFor) { const pw = ctx.powerFor(holder.i, w); if (pw) { w.pickups.push({ kind: 'bubble', power: pw, x: p.x0 + C.PLAT_W / 2, y: C.PLAT_Y + 0.6, top: C.PLAT_Y + 2.6, got: false }); emit(w, 'bubble', { power: pw }); } }
   } else {
     const res = ctx.answer(q, p.i, { first, w, misses: holder.misses });
     holder.misses++;
+    if (w.hard && !p.boss) { w.penalty += C.HARD_PENALTY_S * 60; emit(w, 'penalty', { s: C.HARD_PENALTY_S }); }
     w.mode = 'sink'; w.modeT = C.SINK_S;
-    w.card = { bay: holder, i: p.i, q, secs: holder.misses >= 2 ? C.CARD2_S : C.CARD_S, repeat: !!(res && res.repeat), chosen: q.choices[p.i] };
+    w.card = { bay: holder, i: p.i, q, secs: C.CARD_MAX_S, repeat: !!(res && res.repeat), chosen: q.choices[p.i], misses: holder.misses };
     holder.glow = q.correctIndex; w.fox.vx = 0;
     if (p.boss) w.boss.driftOn = false;
     emit(w, 'wrong', { q, chosen: q.choices[p.i], first, res });
@@ -249,7 +288,7 @@ function bossStep(w, ctx) {
 }
 function nextBossQ(w, ctx) {
   const B = w.boss;
-  B.phase = 'ask'; B.q = ctx.ask(B.bops, w); B.sunk = []; B.misses = 0; B.plY = [0, 0, 0]; B.glow = -1; B.driftOn = true;
+  B.phase = 'ask'; B.q = ctx.ask(B.bops, w); B.sunk = []; B.gone = B.q && B.q.assist ? [B.q.drop] : []; if (B.gone.length) emit(w, 'assist', { boss: true }); B.misses = 0; B.plY = [0, 0, 0]; B.glow = -1; B.driftOn = true;
   emit(w, 'sign', { i: B.bops, q: B.q, boss: true });
 }
 function bossRight(w, p) {

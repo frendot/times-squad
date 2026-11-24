@@ -1,7 +1,11 @@
 import { EXPERT_S } from './experts.js';
 // All tunable numbers for Times Squad v0.4 (the side-scroller). 1 T = 1 tile. Change these after playtests.
 export const CONFIG = {
-  VERSION: '0.4.1',
+  VERSION: '0.5.0-b2',
+  // TESTER SWITCH (T F, until testing is done): true = every level and boss on the map can be played, and the map shows
+  // 'Test build: all open'. Real progress (medals, unlocks, missed facts, ghosts) still saves underneath; a level played
+  // only because of this switch never opens the next one and never counts as earned. Set to false for the normal chain.
+  TEST_UNLOCK_ALL: true,
   PLAYERS: ['fox', 'panda', 'frog', 'owl'],
   // ---- view and physics (spec 4.1) ----
   STEP_S: 1 / 60, VIEW_W: 20, VIEW_H: 11.25, TILE_PX: 48,
@@ -11,10 +15,14 @@ export const CONFIG = {
   BOOTS_JUMP_V: 24.5,         // 6 T high
   BOUNCE_V: 22.4,             // bounce mushroom: 5 T
   BOP_V: 14.2,                // bop bounce: 2 T
-  COYOTE_S: 0.10, JUMP_BUFFER_S: 0.12,
+  COYOTE_S: 0.12, JUMP_BUFFER_S: 0.12,      // v0.5a: a little more forgiving (late jump / early jump)
   JUMP_HELP: { COYOTE_S: 0.2, JUMP_MULT: 1.15 },
   FOX_W: 1, FOX_H: 1.25,
   PIT_SINK_S: 0.6,
+  // ---- v0.5 B2 moves: double jump, Tail Spin (glide), Slide ----
+  DJUMP_V: 14.2,              // the second jump: about 2 T more
+  GLIDE_V: 2.6,               // Tail Spin: the slowest fall speed while jump is held
+  SLIDE_S: 0.7, SLIDE_H: 0.6, SLIDE_SPEED: 1.15, SLIDE_MIN_V: 2.5,
   // ---- layout (spec 4.2 - 4.5) ----
   MAX_GAP_T: 3.5, MAX_STEP_T: 2.5,
   BAY_W: 15, PLAT_W: 3, PLAT_GAP: 2, PLAT_Y: 2.5,
@@ -22,11 +30,19 @@ export const CONFIG = {
   CURTAIN_OPEN_S: 0.6,
   // ---- answers (spec 5.6) ----
   CARD_S: 3.0, CARD2_S: 2.0, SINK_S: 0.4,
+  // ---- v0.5 Drop A ----
+  CARD_MIN_S: 2.0, CARD_MAX_S: 15,   // the strategy card stays at least 2 s, then a tap or a jump closes it (15 s safety close)
+  LAND_CONFIRM_S: 0.15,              // a number counts only after Fox stands on it this long (not while pushed or bounced)
+  PLAT_EDGE_PAD: 0.2,                // number platforms catch Fox a little past their edges
+  HARD_PENALTY_S: 5,                 // Hard mode only: +5 s per mistake (Normal mode: no penalty)
+  RESTART_HOLD_S: 0.5,               // hold R (or the restart button) this long to start the level again
+  CALM_SLOW: 0.6,                    // Calm mode: bad guys move at 60 % speed
+  REVIEW_FROM: 1,                    // review facts from earlier tables start in the 2nd world (x10)
   RETURN_AFTER: [2, 3],
   MISS_LOOKBACK_DAYS: 14,
   POWER_ON_Q: [2, 4, 6],
   // ---- monsters and powers (spec 8) ----
-  PINE_SPEED: 1.5, FROG_HOP_T: 2, FROG_EVERY_S: 1.6,
+  PINE_SPEED: 1.5, FLY_Y: 1.0, FLY_BOB: 0.2, FROG_HOP_T: 2, FROG_EVERY_S: 1.6,
   PUSH_T: 2, BLINK_S: 1, DROP_ACORNS: 3, FLOWER_ACORNS: 3,
   POWER_S: 8, POWERS: ['boots', 'bubble'],
   // ---- medals: Gold = E x 1.4, Silver = E x 1.9, rounded up to 1 s (v0.4; v0.3 rounded up to 5 s, which made gold too easy).
